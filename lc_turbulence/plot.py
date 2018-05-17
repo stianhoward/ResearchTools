@@ -12,34 +12,51 @@ import argparse
 import csv
 import pylab as py
 import scipy
-f1=1000
-mp=.0041033 #mm per pixel
+f1=1000     # Not sure what this is. Needs investigation
+mp=.0041033 # mm per pixel
 
-base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-15/'
-#Determine films in path
-films = glob.glob(base_path + 'Film[1-9]')
-for film in films:
-    film = film + '/'
-    valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
-    for matrix in valuematrices:
-        open_path = matrix
-        save_path = film + '/racetest' + matrix.strip()[-16] + '.png'
+def main():
+    base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-17/'
+    # Determine films in path
+    films = glob.glob(base_path + 'Film[1-9]')
+    for film in films:
+        film = film + '/'
+        valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
+        for matrix in valuematrices:
+            open_path = matrix
+            save_path = film + '/racetest' + matrix.strip()[-16] + '.png'
 
-        #Try to open info about file location in 'position.txt'
-        try:
-            file = open(film + matrix.strip()[-16] + '/position.txt')
-            area = file.read()
-            area = area.strip() + ': '
-            file.close()
-        except:
-            area = ''
+            try:
+                rawData = pd.read_csv(open_path) # Import a data set
+                location = loadLocation(film + matrix.strip()[-16] + '/position.txt')
+                scatter(rawData, location, save_path) # Create and save Scatter plot of data
+            except:
+                print("Failed to open data for: " + open_path)
 
 
-        oldstuff = pd.read_csv(open_path) #import a data set
-        yslice1 = oldstuff.astype({'x':'int','y':'int'}) #set x and y values to integers
 
-        def custom_round(x, base=20):
-            return int(base * round(float(x)/base)) #this sets the width of the bins
+
+def custom_round(x, base=20):
+    return int(base * round(float(x)/base)) #this sets the width of the bins
+
+
+def loadLocation(filePath):
+    #Try to open info about file location in 'position.txt'
+    try:
+        file = open(filePath)
+        location = file.read()
+        location = location.strip() + ': '
+        file.close()
+    except:
+        location = ''
+        # Todo: Collect all of these to print at the end under one print.
+        print("No 'position.txt' file found in: " + filePath)
+
+    return location
+
+
+def scatter(rawData, location, save_path):
+        yslice1 = rawData.astype({'x':'int','y':'int'}) #set x and y values to integers
 
         yslice1['x']=yslice1['x'].apply(lambda x: custom_round(x, base=10))
         ygrouped1=yslice1.groupby(['x'],as_index=False).agg({'dr':['mean','std']})
@@ -56,6 +73,10 @@ for film in films:
 
         plt.xlabel('Position',fontsize=20)
         plt.ylabel('Velocity (mm/s)',fontsize=20)
-        plt.title(area + '\nVelocity vs. Position',fontsize=20)
+        plt.title(location + '\nVelocity vs. Position',fontsize=20)
         ax.legend()
         fig.savefig(save_path)
+
+
+if __name__ == '__main__':
+    main()
