@@ -1,2 +1,2 @@
 # ResearchTools
-Tools made for the research group
+Tools with Liquid Crystal Research Group
