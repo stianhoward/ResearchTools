@@ -8,7 +8,8 @@ FRAME_RATE= 8000        # FrameRate
 PIXEL_SIZE=.0044     # mm per pixel
 
 def main():
-    base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-17/'
+    # base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-17/'
+    base_path = '/home/stian/Desktop/test/'
 
     # Determine films in path
     films = glob.glob(base_path + 'Film[1-9]')

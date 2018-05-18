@@ -1,30 +1,11 @@
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-# Optionally, tweak styles.
-mpl.rc('figure',  figsize=(10, 6))
-mpl.rc('image', cmap='gray')
 import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series  # for convenience
 import pims
 import trackpy as tp
 tp.ignore_logging()
-# from IPython.html.widgets import interact, interactive, fixed
-from ipywidgets import interact, interactive, fixed
 from skimage import data, color
 import skimage
-from skimage.transform import hough_circle
-from skimage.feature import peak_local_max
-from skimage.draw import circle_perimeter
-from skimage.util import img_as_ubyte
-from skimage.filters import threshold_otsu, threshold_adaptive
-#import av
-from skimage import morphology, util
-from scipy.ndimage.interpolation import rotate
-import trackpy.predict
-from scipy.optimize import fmin
 import glob
 import os
 import sys
@@ -33,8 +14,8 @@ import sys
 #User options#
 THRESH = 45
 #Folder to analyze
-path = '/media/stian/Evan Dutch/Turbulence/2018-05-17/'
-# path = '/home/stian/Desktop/test/'
+# path = '/media/stian/Evan Dutch/Turbulence/2018-05-17/'
+path = '/home/stian/Desktop/test/'
 
 
 def main():
@@ -59,7 +40,7 @@ def analyze_frames(film, number):
     with tp.PandasHDFStoreBig(datastorename) as s:
         normalize_picture(frames, number, s)              # Normalize the pictures to black and white
         print('\t Identifying tracks and linking...')
-        pred = trackpy.predict.ChannelPredict(10,minsamples=3)
+        pred = tp.predict.ChannelPredict(10,minsamples=3)
 
         # Save data into HDFS5 file
         for linked in pred.link_df_iter(s,15):
@@ -72,13 +53,13 @@ def thresh(img):
     #determine threshold values from imagej
     img[img<THRESH] = 0
     img[img>THRESH] = 255
-    return util.img_as_int(img)
+    return skimage.util.img_as_int(img)
 
 
 def normalize_picture(frames, number, s):
     num_frames = str(len(frames))
     for num, img in enumerate(frames):
-        print('\t Normalizing image ' + str(num) + '/' + num_frames + '...\r', end='')
+        print('\t Normalizing image ' + str(num + 1) + '/' + num_frames + '...\r', end='')
         
         label_image,num_regions = skimage.measure.label(img, return_num=True)
 
