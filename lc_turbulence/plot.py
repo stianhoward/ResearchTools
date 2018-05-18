@@ -1,18 +1,9 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-mpl.rc('figure',  figsize=(10, 6))
-mpl.rc('image', cmap='gray')
-import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series  #for convenience
-from numpy.polynomial import polynomial as P
 import glob
-import argparse
-import csv
-import pylab as py
-import scipy
 import sys
+import os
 FRAME_RATE= 8000        # FrameRate
 PIXEL_SIZE=.0044     # mm per pixel
 
@@ -26,28 +17,27 @@ def main():
         valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
         for matrix in valuematrices:
             open_path = matrix
-            save_path = film
+            save_path = film + 'plots/'
             save_name = matrix.strip()[-16] + '.png'
 
-            # save_path = film + '/racetest' + matrix.strip()[-16] + '.png'
+            if not os.path.exists(save_path):
+                os.makedirs(save_path)
 
             try:
-                raw_data = pd.read_csv(open_path)        # Import a data set
-                location = loadLocation(film + matrix.strip()[-16] + '/position.txt')
+                raw_data = pd.read_csv(open_path)                   # Import a data set
+                location = load_location(film + matrix.strip()[-16] + '/position.txt')
                 scatter(raw_data, location, save_path, save_name)   # Create and save Scatter plot of data
-                vector(raw_data, location, save_path, save_name)
+                vector(raw_data, location, save_path, save_name)    # Create and save vector plot of data
             except:
                 print("Unexpected error:", sys.exc_info())
                 print("Failed to open and process data for: " + open_path)
-
-
 
 
 def custom_round(x, base=20):
     return int(base * round(float(x)/base)) #this sets the width of the bins
 
 
-def loadLocation(filePath):
+def load_location(filePath):
     #Try to open info about file location in 'position.txt'
     try:
         file = open(filePath)
@@ -82,7 +72,10 @@ def scatter(raw_data, location, save_path, save_name):
     plt.ylabel('Velocity (mm/s)',fontsize=20)
     plt.title(location + ': \nVelocity vs. Position',fontsize=20)
     ax.legend()
-    fig.savefig(save_path + 'scatter' + save_name)
+    try:
+        fig.savefig(save_path + 'scatter' + save_name)
+    except:
+        print("Unexpected error saving scatter plot:", sys.exc_info())
     plt.close()
 
 
@@ -116,7 +109,8 @@ def vector(raw_data, location, save_path, save_name):
     try:
         plt.savefig(save_path + 'vectorplot' + save_name)
     except:
-        print("Unexpected error saving plot:", sys.exc_info())      
+        print("Unexpected error saving vector plot:", sys.exc_info())
+    plt.close()
 
 
 
