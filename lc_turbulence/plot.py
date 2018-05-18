@@ -26,17 +26,16 @@ def main():
         valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
         for matrix in valuematrices:
             open_path = matrix
-            save_path = film + '/racetest' + matrix.strip()[-16] + '.png'
+            save_path = film
+            save_name = matrix.strip()[-16] + '.png'
+
+            # save_path = film + '/racetest' + matrix.strip()[-16] + '.png'
 
             try:
                 raw_data = pd.read_csv(open_path)        # Import a data set
                 location = loadLocation(film + matrix.strip()[-16] + '/position.txt')
-                scatter(raw_data, location, save_path)   # Create and save Scatter plot of data
-                try:
-                    vector(raw_data, location, save_path)    # Create the vector graph
-                except:
-                    print("Unexpected error:", sys.exc_info())
-                    print("Failed to produce plot")
+                scatter(raw_data, location, save_path, save_name)   # Create and save Scatter plot of data
+                vector(raw_data, location, save_path, save_name)
             except:
                 print("Unexpected error:", sys.exc_info())
                 print("Failed to open and process data for: " + open_path)
@@ -63,7 +62,7 @@ def loadLocation(filePath):
     return location
 
 
-def scatter(raw_data, location, save_path):
+def scatter(raw_data, location, save_path, save_name):
     yslice1 = raw_data.astype({'x':'int','y':'int'}) #set x and y values to integers
 
     yslice1['x']=yslice1['x'].apply(lambda x: custom_round(x, base=10))
@@ -83,10 +82,10 @@ def scatter(raw_data, location, save_path):
     plt.ylabel('Velocity (mm/s)',fontsize=20)
     plt.title(location + ': \nVelocity vs. Position',fontsize=20)
     ax.legend()
-    fig.savefig(save_path)
+    fig.savefig(save_path + 'scatter' + save_name)
 
 
-def vector(raw_data, location, save_path):
+def vector(raw_data, location, save_path, save_name):
     # Import desired elements
     raw_data = raw_data.astype({'x':'int','y':'int','dx':'float','dy':'float'})
     data = raw_data.loc[:,['x','y','dx','dy']]
@@ -114,7 +113,7 @@ def vector(raw_data, location, save_path):
     
     # Save Plot
     try:
-        plt.savefig(save_path)
+        plt.savefig(save_path + 'vectorplot' + save_name)
     except:
         print("Unexpected error saving plot:", sys.exc_info())      
 
