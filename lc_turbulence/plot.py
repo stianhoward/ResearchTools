@@ -83,6 +83,7 @@ def scatter(raw_data, location, save_path, save_name):
     plt.title(location + ': \nVelocity vs. Position',fontsize=20)
     ax.legend()
     fig.savefig(save_path + 'scatter' + save_name)
+    plt.close()
 
 
 def vector(raw_data, location, save_path, save_name):
