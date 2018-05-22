@@ -8,8 +8,8 @@ FRAME_RATE= 8000        # FrameRate
 PIXEL_SIZE=.0044     # mm per pixel
 
 def main():
-    # base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-17/'
-    base_path = '/home/stian/Desktop/test/'
+    base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
+    #base_path = '/home/stian/Desktop/test/'
 
     # Determine films in path
     films = glob.glob(base_path + 'Film[1-9]')
@@ -28,7 +28,7 @@ def main():
                 raw_data = pd.read_csv(open_path)                   # Import a data set
                 location = load_location(film + matrix.strip()[-16] + '/position.txt')
                 scatter(raw_data, location, save_path, save_name)   # Create and save Scatter plot of data
-                vector(raw_data, location, save_path, save_name)    # Create and save vector plot of data
+                vector(raw_data, location, save_path, save_name, film)
             except:
                 print("Unexpected error:", sys.exc_info())
                 print("Failed to open and process data for: " + open_path)
@@ -80,8 +80,9 @@ def scatter(raw_data, location, save_path, save_name):
     plt.close()
 
 
-def vector(raw_data, location, save_path, save_name):
+def vector(raw_data, title, save_path, save_name, film_dir):
     # Import desired elements
+    img = retrieve_image(film_dir + save_name[0])
     raw_data = raw_data.astype({'x':'int','y':'int','dx':'float','dy':'float'})
     data = raw_data.loc[:,['x','y','dx','dy']]
 
@@ -92,23 +93,49 @@ def vector(raw_data, location, save_path, save_name):
     # Organize data for plot
     data = data.groupby(['x','y']).mean()
     data = data.reset_index()
-    
-    # Adjust for pixel size and framerate
-    data.x = (data.x) * PIXEL_SIZE
-    data.y = (data.y * -1 + data.y.values.max()) * PIXEL_SIZE
-    data.dx = data.dx * FRAME_RATE * PIXEL_SIZE
-    data.dy = data.dy * FRAME_RATE * PIXEL_SIZE * -1
+    data.dy = data.dy * -1
 
-    # Create and label plot
-    plt.figure(figsize = (12,10))
-    plt.title(location, fontsize = 45)
-    plt.quiver(data['x'],data['y'],data['dx'],data['dy'])
+    #These need to be in this order since data is sent by referene, and edits are made in the display process.
+    # Potential fix is to change data direction in the call for plt.quiver itself, or assign data.y to a new variable in quiver_plot()
+    if img is not None:      
+        quiver_plot(data, title, save_path + 'vectorplot_overlay' + save_name, img)
+    quiver_plot(data, title, save_path + 'vectorplot' + save_name, None)
+
+
+def retrieve_image(image_directory):
+    first_file = image_directory + '/' + os.listdir(image_directory)[4]
+    print('Using image: ' + first_file)
+    try:
+        return mpl.image.imread(first_file)
+    except:
+        print("Unexpected error importing found image file: ", sys.exc_info())
+        return None
+
+
+def quiver_plot(data, title, save_path, img):
+    #Plotting
+    fig = plt.figure(figsize=(12,10))
+    ax = fig.add_subplot(111)
+    if img is not None:
+        plt.imshow(img)
+    else:
+        data.y = data.y * -1
+    plt.quiver(data['x'],data['y'],data['dx'],data['dy'], color='red')
+    
+    #labels and title
+    plt.title(title, fontsize = 45)
     plt.xlabel('x-distance (mm)', fontsize = 30)
     plt.ylabel('y-distance (mm)', fontsize = 30)
-    
+
+    #adjust axes scaling
+    ticks_x = mpl.ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * PIXEL_SIZE))
+    ax.xaxis.set_major_formatter(ticks_x)
+    ticks_y = mpl.ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * PIXEL_SIZE))
+    ax.yaxis.set_major_formatter(ticks_y)
+
     # Save Plot
     try:
-        plt.savefig(save_path + 'vectorplot' + save_name)
+        plt.savefig(save_path)
     except:
         print("Unexpected error saving vector plot:", sys.exc_info())
     plt.close()
