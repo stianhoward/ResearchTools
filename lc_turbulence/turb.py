@@ -12,10 +12,10 @@ import sys
 
 
 #User options#
-THRESH = 45
+THRESH = 40
 #Folder to analyze
-# path = '/media/stian/Evan Dutch/Turbulence/2018-05-17/'
-path = '/home/stian/Desktop/test/'
+path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
+# path = '/home/stian/Desktop/test/'
 
 
 def main():
@@ -83,9 +83,13 @@ def normalize_picture(frames, number, s):
 
 
 def export_csv(t1, film, number):
-    print('\t exporting to CSV file...')
+    # print('\t exporting to CSV file...')
     data = pd.DataFrame()
+    num_particles = str(len(set(t1.particle)))
+    i = 0
     for item in set(t1.particle):
+        i = i + 1
+        print('\t exporting particle ' + str(i) + '/' + num_particles + '...\r', end='')
         sub = t1[t1.particle==item].sort_values('frame') #just to make sure that subsequent frames are still next to each other after copy
         dvx = np.diff(sub.x)
         dvy = np.diff(sub.y)
@@ -102,6 +106,7 @@ def export_csv(t1, film, number):
                                 'particle': item,
                                 }])
     data.to_csv(film+'t'+number.strip()[-1]+'valuematrix.csv')
+    print('')
 
 
 if __name__ == '__main__':
