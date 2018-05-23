@@ -1,3 +1,16 @@
+'''
+Script for tracking particle movement from a series of measurements.
+Uses the trackpy library, which is specialized for tracking particles in
+softmatter research. Exports partially processed data in an HDF5 file, and 
+fully processed data in a CSV file.
+
+USE:
+- Call the turb.main(base_path) function from another script
+- Simply run this script itself, editing the base_path argument below
+
+base_path is the path to the folder containing multiple films using 
+the labs normal file structure.
+'''
 
 import numpy as np
 import pandas as pd
@@ -14,12 +27,12 @@ import sys
 #User options#
 THRESH = 40
 #Folder to analyze
-path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
-# path = '/home/stian/Desktop/test/'
+base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
+# base_path = '/home/stian/Desktop/test/'
 
 
-def main():
-    films = glob.glob(path + 'Film[1-9]')               # Find all films recorded
+def main(base_path):
+    films = glob.glob(base_path + 'Film[1-9]')               # Find all films recorded
     if films != []:     # Ensure folders are actually found
         print(films)
         for film in films:                              # Iterate through found films
@@ -110,4 +123,4 @@ def export_csv(t1, film, number):
 
 
 if __name__ == '__main__':
-    main()
+    main(base_path)

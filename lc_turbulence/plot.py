@@ -1,3 +1,16 @@
+'''
+Script for plotting data for particle movements.
+This script inports the data, exported by turb.py in 
+.csv format, and displays the data in a usable format.
+
+USE:
+- Call the plot.main(base_path) function from another script
+- Simply run this script itself, editing the base_path argument below
+
+base_path is the path to the folder containing multiple films using 
+the labs normal file structure.
+'''
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -7,11 +20,11 @@ import os
 FRAME_RATE= 8000        # FrameRate
 PIXEL_SIZE=.0044     # mm per pixel
 
-def main():
-    base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
-    #base_path = '/home/stian/Desktop/test/'
+# base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
+base_path = '/home/stian/Desktop/test/'
 
-    # Determine films in path
+def main(base_path):
+    # locate films in the path
     films = glob.glob(base_path + 'Film[1-9]')
     for film in films:
         film = film + '/'
@@ -33,9 +46,6 @@ def main():
                 print("Unexpected error:", sys.exc_info())
                 print("Failed to open and process data for: " + open_path)
 
-
-def custom_round(x, base=20):
-    return int(base * round(float(x)/base)) #this sets the width of the bins
 
 
 def load_location(filePath):
@@ -78,6 +88,10 @@ def scatter(raw_data, location, save_path, save_name):
     except:
         print("Unexpected error saving scatter plot:", sys.exc_info())
     plt.close()
+
+
+def custom_round(x, base=20):
+    return int(base * round(float(x)/base)) #this sets the width of the bins
 
 
 def vector(raw_data, title, save_path, save_name, film_dir):
@@ -141,6 +155,5 @@ def quiver_plot(data, title, save_path, img):
     plt.close()
 
 
-
 if __name__ == '__main__':
-    main()
+    main(base_path)
