@@ -18,7 +18,7 @@ import glob
 import sys
 import os
 FRAME_RATE= 8000        # FrameRate
-PIXEL_SIZE=.0044     # mm per pixel
+PIXEL_SIZE=.0044        # mm per pixel
 
 # base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
 base_path = '/home/stian/Desktop/test/'
@@ -38,9 +38,12 @@ def main(base_path):
                 os.makedirs(save_path)
 
             try:
-                raw_data = pd.read_csv(open_path)                   # Import a data set
+                # Import a data set
+                raw_data = pd.read_csv(open_path)
+                # Import extra info about data set                   
                 location = load_location(film + matrix.strip()[-16] + '/position.txt')
-                scatter(raw_data, location, save_path, save_name)   # Create and save Scatter plot of data
+                # Create and save Scatter plot of data
+                scatter(raw_data, location, save_path, save_name)
                 vector(raw_data, location, save_path, save_name, film)
             except:
                 print("Unexpected error:", sys.exc_info())
@@ -62,16 +65,16 @@ def load_location(filePath):
 
     return location
 
-
+# Code from old scripts. Bad representation of data- mostly untouched
 def scatter(raw_data, location, save_path, save_name):
-    yslice1 = raw_data.astype({'x':'int','y':'int'}) #set x and y values to integers
+    yslice1 = raw_data.astype({'x':'int','y':'int'})    # set x and y values to integers
 
     yslice1['x']=yslice1['x'].apply(lambda x: custom_round(x, base=10))
     ygrouped1=yslice1.groupby(['x'],as_index=False).agg({'dr':['mean','std']})
     ygrouped1.columns=['x','dr','std']
-    y1=ygrouped1.fillna(0) #replace NaNs with 0's
+    y1=ygrouped1.fillna(0)                              # replace NaNs with 0's
 
-    x1=(-210+y1['x'])*PIXEL_SIZE    # Determin where the '210' value comes from. Potentially offset? half of width?
+    x1=(-210+y1['x'])*PIXEL_SIZE                        # Determin where the '210' value comes from. Potentially offset? half of width?
     dr1=y1['dr']*FRAME_RATE*PIXEL_SIZE      
 
     fig=plt.figure()
@@ -90,34 +93,38 @@ def scatter(raw_data, location, save_path, save_name):
     plt.close()
 
 
+# Function used in setting bin widths
 def custom_round(x, base=20):
-    return int(base * round(float(x)/base)) #this sets the width of the bins
+    return int(base * round(float(x)/base)) 
 
 
 def vector(raw_data, title, save_path, save_name, film_dir):
-    # Import desired elements
+    # Import image and data
     img = retrieve_image(film_dir + save_name[0])
     raw_data = raw_data.astype({'x':'int','y':'int','dx':'float','dy':'float'})
+
+    # Extract relevent parts of imported data
     data = raw_data.loc[:,['x','y','dx','dy']]
 
-    # Round values to bin sizes
+   # Set data to 50 pixel chunks
     data['x'] = data['x'].apply(lambda x: custom_round(x, base = 50))
     data['y'] = data['y'].apply(lambda y: custom_round(y, base = 50))
 
-    # Organize data for plot
+    # Organize the data by x and y, averaging velocities
     data = data.groupby(['x','y']).mean()
     data = data.reset_index()
     data.dy = data.dy * -1
 
-    #These need to be in this order since data is sent by referene, and edits are made in the display process.
-    # Potential fix is to change data direction in the call for plt.quiver itself, or assign data.y to a new variable in quiver_plot()
-    if img is not None:      
+    # These need to be in this order since data is sent by referene, and edits are made in the display process.
+    # Potential fix is to change dy and y direction in the call for plt.quiver itself, or assign data.y to a new variable in quiver_plot()
+    if img is not None:                                                 # Call quiver_plot to actually perform the plotting
         quiver_plot(data, title, save_path + 'vectorplot_overlay' + save_name, img)
     quiver_plot(data, title, save_path + 'vectorplot' + save_name, None)
 
 
 def retrieve_image(image_directory):
-    first_file = image_directory + '/' + os.listdir(image_directory)[4]
+    # Path to 4th object in scene directory. When naming finalized, change to more reliable method.
+    first_file = image_directory + '/' + os.listdir(image_directory)[4] 
     print('Using image: ' + first_file)
     try:
         return mpl.image.imread(first_file)
@@ -127,21 +134,23 @@ def retrieve_image(image_directory):
 
 
 def quiver_plot(data, title, save_path, img):
-    #Plotting
+    # Plotting
     fig = plt.figure(figsize=(12,10))
     ax = fig.add_subplot(111)
     if img is not None:
+        # If an image is input, plot that first
         plt.imshow(img)
     else:
+        # If no image, indexing start bottom left, so reverse y values
         data.y = data.y * -1
     plt.quiver(data['x'],data['y'],data['dx'],data['dy'], color='red')
     
-    #labels and title
+    # Labels and title
     plt.title(title, fontsize = 45)
     plt.xlabel('x-distance (mm)', fontsize = 30)
     plt.ylabel('y-distance (mm)', fontsize = 30)
 
-    #adjust axes scaling
+    # Adjust axes scaling
     ticks_x = mpl.ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * PIXEL_SIZE))
     ax.xaxis.set_major_formatter(ticks_x)
     ticks_y = mpl.ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * PIXEL_SIZE))
