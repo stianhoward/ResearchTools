@@ -19,6 +19,7 @@ import time
 import glob
 import sys
 import os
+
 FRAME_RATE= 7955        # FrameRate
 PIXEL_SIZE=.0044        # mm per pixel
 
@@ -157,8 +158,8 @@ def quiver_plot(data, title, save_path, img):
     # Adjust axes scaling
     ticks_x = mpl.ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * PIXEL_SIZE))
     ax.xaxis.set_major_formatter(ticks_x)
-    ticks_y = mpl.ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * PIXEL_SIZE))
-    ax.yaxis.set_major_formatter(ticks_y)
+    #ticks_y = mpl.ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * PIXEL_SIZE))
+    #ax.yaxis.set_major_formatter(ticks_y)
 
     # Save Plot
     try:
@@ -246,9 +247,9 @@ def scatter_plot(data,title):
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
     for source in sources:
-        ax1.scatter(data.loc[source].reset_index()['x'], data.loc[source].reset_index()['dr'], marker="o", label=source)
+        ax1.scatter(data.loc[source].reset_index()['x'], data.loc[source].reset_index()['dr'].multiply(PIXEL_SIZE * FRAME_RATE), marker="o", label=source)
     plt.legend(loc='upper left')
-    plt.ylabel('dr')
+    plt.ylabel('dr (mm/s)')
     plt.xlabel('position (pixels)')
     plt.title(title)
     return fig
