@@ -23,7 +23,7 @@ import os
 FRAME_RATE= 7955        # FrameRate
 PIXEL_SIZE=.0044        # mm per pixel
 
-base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-25/'
+base_path = '/media/stian/Evan Dutch/Turbulence/2018-06-06/'
 # base_path = '/home/stian/Desktop/2018-05-23/'
 
 def main(base_path):
@@ -186,7 +186,7 @@ def load_paths(base_path, make_save_dir = True):
     return paths
 
 
-def save_figure(fig, save_path, name):
+def save_figure(fig, save_path, name = ''):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     
@@ -198,6 +198,7 @@ def save_figure(fig, save_path, name):
 
 def cross_flow(base_path):
     #Look into serparating by film...
+    #Probably put some of this into a different function? Or loop through them here with edited load_paths?
     save_path = os.path.join(base_path, 'plots')
     paths = load_paths(base_path)
     # load in data and sort
@@ -247,7 +248,8 @@ def scatter_plot(data,title):
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
     for source in sources:
-        ax1.scatter(data.loc[source].reset_index()['x'], data.loc[source].reset_index()['dr'].multiply(PIXEL_SIZE * FRAME_RATE), marker="o", label=source)
+        ax1.scatter(data.loc[source].reset_index()['x'], data.loc[source].reset_index()['dr'].multiply(PIXEL_SIZE * FRAME_RATE), marker="o", label=None)
+        ax1.plot(data.loc[source].reset_index()['x'], data.loc[source].reset_index()['dr'].multiply(PIXEL_SIZE * FRAME_RATE), label = source)
     plt.legend(loc='upper left')
     plt.ylabel('dr (mm/s)')
     plt.xlabel('position (pixels)')
