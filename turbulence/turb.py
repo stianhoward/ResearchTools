@@ -22,13 +22,16 @@ import skimage
 import glob
 import os
 import sys
+from tkinter import filedialog
+from joblib import Parallel, delayed
+from timeit import default_timer as timer
 
 
 #User options#
-THRESH = 40
+THRESH = 60
 #Folder to analyze
-base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
-# base_path = '/home/stian/Desktop/test/'
+# base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
+base_path = '/home/stian/Desktop/2018-05-23/'
 
 
 def main(base_path):
@@ -57,7 +60,10 @@ def analyze_frames(film, number):
 
     with tp.PandasHDFStoreBig(datastorename) as s:
         # Normalize the pictures to black and white, and identify islands
-        normalize_pictures(frames, number, s)
+        start = timer()
+        normalize_pictures_parallel(frames,number,s)
+        end = timer()
+        print(end-start)
         print('\t Identifying tracks and linking...')
 
         # Connect and track particles. Saving tracks to 's'.
@@ -73,6 +79,36 @@ def thresh(img):
     img[img<THRESH] = 0
     img[img>THRESH] = 255
     return skimage.util.img_as_int(img)
+
+
+def normalize_pictures_parallel(frames, number, s):
+    features = Parallel(n_jobs=-2,verbose=1)(delayed(normalize)(num,img,number) for num,img in enumerate(frames))
+    for feature in features:
+        s.put(feature)
+
+
+def normalize(num,img,number):
+    # Identify islands in the image
+    label_image,num_regions = skimage.measure.label(img, return_num=True)
+
+    features = pd.DataFrame()
+    # If only one artifact (the post), skip to next frame
+    if num_regions <1:
+        return features
+
+    # Check quality of islands found, and save if good enough
+    for region in skimage.measure.regionprops(label_image, intensity_image = img):
+        if region.area <20 or region.area >900000:
+            continue
+        if region.mean_intensity ==255:
+            continue
+        if region.eccentricity > .78:
+            continue
+        features = features.append([{'y':region.centroid[0],
+                            'x':region.centroid[1],
+                            'frame':num,
+                            'region': number }])
+    return features
 
 
 def normalize_pictures(frames, number, s):
@@ -136,4 +172,7 @@ def export_csv(t1, film, number):
 
 
 if __name__ == '__main__':
+    directory = filedialog.askdirectory()
+    if directory != "":
+        base_path = directory
     main(base_path)
