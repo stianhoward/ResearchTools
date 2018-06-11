@@ -15,6 +15,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from tkinter import filedialog
 import time
 import glob
 import sys
@@ -23,11 +24,15 @@ import os
 FRAME_RATE= 7955        # FrameRate
 PIXEL_SIZE=.0044        # mm per pixel
 
-base_path = '/media/stian/Evan Dutch/Turbulence/2018-06-06/'
-# base_path = '/home/stian/Desktop/2018-05-23/'
+base_path = '/media/stian/Evan Dutch/Turbulence/2018-06-08/'
+# base_path = '/home/stian/Desktop/test/'
 
 def main(base_path):
     cross_flow(base_path)
+
+    '''
+    Following sectio needs to be cleaned up. Ideally remove ugly loop from this entire section into another function.
+    '''
     # locate films in the path
     films = glob.glob(os.path.join(base_path, 'Film[1-9]'))
     for film in films:
@@ -258,4 +263,7 @@ def scatter_plot(data,title):
 
 
 if __name__ == '__main__':
+    directory = filedialog.askdirectory()
+    if directory != "":
+        base_path = directory
     main(base_path)
