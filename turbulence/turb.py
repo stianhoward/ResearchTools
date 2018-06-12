@@ -81,13 +81,13 @@ def thresh(img):
     return skimage.util.img_as_int(img)
 
 
-def normalize_pictures_parallel(frames, number, s):
-    features = Parallel(n_jobs=-2,verbose=1)(delayed(normalize)(num,img,number) for num,img in enumerate(frames))
+def normalize_pictures_parallel(frames, sequence, s):
+    features = Parallel(n_jobs=-2,verbose=1)(delayed(normalize)(num,img,sequence) for num,img in enumerate(frames))
     for feature in features:
         s.put(feature)
 
 
-def normalize(num,img,number):
+def normalize(num,img,sequence):
     # Identify islands in the image
     label_image,num_regions = skimage.measure.label(img, return_num=True)
 
@@ -106,16 +106,18 @@ def normalize(num,img,number):
             continue
         features = features.append([{'y':region.centroid[0],
                             'x':region.centroid[1],
+                            'area':region.area,
                             'frame':num,
-                            'region': number }])
+                            'region': sequence }])
     return features
 
 
-def normalize_pictures(frames, number, s):
+def normalize_pictures(frames, sequence, s):
     num_frames = str(len(frames))
     for num, img in enumerate(frames):                                     
         print('\t Normalizing image ' + str(num + 1) + '/' + num_frames + '...\r', end='')
-        
+        features = normalize(num,img,sequence)
+        '''
         # Identify islands in the image
         label_image,num_regions = skimage.measure.label(img, return_num=True)
 
@@ -136,6 +138,7 @@ def normalize_pictures(frames, number, s):
                                 'x':region.centroid[1],
                                 'frame':num,
                                 'region': number }])
+        '''
         s.put(features)
     print('')   # Prevent progress message deletion
 
@@ -155,13 +158,13 @@ def export_csv(t1, film, number):
         dvy = np.diff(sub.y)
         dvr = np.sqrt(dvx**2+dvy**2)
         # Insert the data into the DataFrame
-        for x, y, dx, dy, dvr, frame, region in zip(sub.x[:-1], sub.y[:-1], dvx, dvy, dvr, sub.frame[:-1],sub.region[:-1]):
+        for x, y, dx, dy, dvr, area, frame, region in zip(sub.x[:-1], sub.y[:-1], dvx, dvy, dvr, sub.area[:-1], sub.frame[:-1],sub.region[:-1]):
             data = data.append([{'dx': dx,
                                 'dy': dy,
                                 'dr': dvr,
                                 'x': x,
                                 'y': y,
-                            
+                                'area':area,
                                 'frame': frame,
                                 'region': region,
                                 'particle': item,
