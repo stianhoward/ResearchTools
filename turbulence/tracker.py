@@ -24,17 +24,18 @@ import pandas as pd
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import glob
 import sys
 import os
 
 
 # Constants
 FRAME_MIN = 10
-FRAME_MAX = 100
-X_MIN = 700
-X_MAX = 900
-Y_MIN = 400
-Y_MAX = 500
+FRAME_MAX = 300
+X_MIN = 450
+X_MAX = 650
+Y_MIN = 350
+Y_MAX = 550
 
 
 def main():
@@ -56,8 +57,7 @@ def request_file_path(win_name, start_dir, file_types = ("all files","*.*"), abo
     except:
         print("Failed to request file path", sys.exc_info())
         quit()
-
-    if abort and path == '':
+    if abort and path == ():
         print("No path selected - Aborting")
         quit()
 
@@ -70,6 +70,14 @@ def request_file_path(win_name, start_dir, file_types = ("all files","*.*"), abo
 
 def load_image(data_path,end_frame):
     image_path = request_file_path("Select frame " + str(end_frame), os.path.dirname(data_path), (("Bitmap files","*.bmp"),("all files","*.*")))
+    if not os.path.isfile(image_path):
+        images = glob.glob(os.path.join(image_path,"*",end_frame,".bmp"))
+        images.sort()
+        if not images:
+            print("No image found in selected directory - Aborting")
+            quit()
+        else:
+            image_path = images[0] 
     try:
         return mpl.image.imread(image_path)
     except:
@@ -101,7 +109,7 @@ def import_data(path):
 def process_data(raw_data):
     raw_data = raw_data.astype({'x':'float','y':'float','frame':'int','particle':'int'})
     data = raw_data.loc[:,['x','y','frame','particle']]
-    data = data[data['frame'].between(FRAME_MIN, FRAME_MAX) & data['x'].between(X_MIN, X_MAX)]
+    data = data[data['frame'].between(FRAME_MIN, FRAME_MAX) & data['x'].between(X_MIN, X_MAX) & data['y'].between(Y_MIN, Y_MAX)]
     data.groupby(['particle','frame']).mean()
     if data.empty:
         print("Data in bounds is empty - Aborting")
