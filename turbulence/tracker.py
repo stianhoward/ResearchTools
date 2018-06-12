@@ -18,9 +18,139 @@
 
 '''
 
-def main():
-    return
+from tkinter import filedialog, Tk
+#from tkinter import *
+import pandas as pd
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import sys
+import os
 
+
+# Constants
+FRAME_MIN = 10
+FRAME_MAX = 100
+X_MIN = 700
+X_MAX = 900
+Y_MIN = 400
+Y_MAX = 500
+
+
+def main():
+    # Inputs
+    data_path = request_file_path("Select CSV file to open", os.path.expanduser('~'), (("CSV files","*.csv"),("all files","*.*")))
+    end_image = load_image(data_path,FRAME_MAX)
+    
+    # Operations
+    particle_tracking(data_path,end_image)
+
+
+def request_file_path(win_name, start_dir, file_types = ("all files","*.*"), abort = True):
+    # Create window instance, and hide it then ask for the directory
+    try:
+        root = Tk()
+        root.withdraw()
+        path = filedialog.askopenfilename(title = win_name, initialdir= start_dir, filetypes = file_types)
+        root.destroy()
+    except:
+        print("Failed to request file path", sys.exc_info())
+        quit()
+
+    if abort and path == '':
+        print("No path selected - Aborting")
+        quit()
+
+    if not os.path.isfile(path):
+        print("Path does not point to accessible file - Aborting")
+        quit()
+    
+    return path
+
+
+def load_image(data_path,end_frame):
+    image_path = request_file_path("Select frame " + str(end_frame), os.path.dirname(data_path), (("Bitmap files","*.bmp"),("all files","*.*")))
+    try:
+        return mpl.image.imread(image_path)
+    except:
+        print("Unexpected error importing found image file: ", sys.exc_info())
+        return None
+
+
+def particle_tracking(data_path, end_image):
+    # Processing
+    raw_data = import_data(data_path)
+    data = process_data(raw_data)
+    figure = create_image(data,end_image)
+
+    #Outputs
+    save_path = request_save_loc(data_path)
+    save_figure(figure, save_path)
+    plt.close()
+
+
+def import_data(path):
+    try:
+        raw_data = pd.read_csv(path)
+    except:
+        print("Failed to import CSV file", sys.exc_info())
+
+    return raw_data
+
+
+def process_data(raw_data):
+    raw_data = raw_data.astype({'x':'float','y':'float','frame':'int','particle':'int'})
+    data = raw_data.loc[:,['x','y','frame','particle']]
+    data = data[data['frame'].between(FRAME_MIN, FRAME_MAX) & data['x'].between(X_MIN, X_MAX)]
+    data.groupby(['particle','frame']).mean()
+    if data.empty:
+        print("Data in bounds is empty - Aborting")
+        quit()
+    else:
+        return data
+
+
+def create_image(data, image, title=''):
+    particles = np.unique(data.reset_index()['particle'])
+    data = data.groupby(['particle','x','y']).mean()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    plt.imshow(image)
+    for particle in particles:
+        ax1.plot(data.loc[particle].reset_index()['x'], data.loc[particle].reset_index()['y'], label = particle)
+    plt.legend(loc='upper left')
+    plt.ylabel('y (pixels)')
+    plt.xlabel('x (pixels)')
+    plt.title(title)
+    return fig
+
+
+def request_save_loc(data_path):
+    try:
+        root = Tk()
+        root.withdraw()
+        path =  filedialog.asksaveasfilename(initialdir = os.path.dirname(data_path),title = "Save image as...",filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+        root.destroy()
+    except:
+        print("Failed to request file path", sys.exc_info())
+        quit()
+
+    print(path)
+    if os.path.exists(os.path.dirname(path)):
+        return path
+    else:
+        try:
+            os.makedirs(os.path.dirname(path))
+        except:
+            print("No valid path selected and/or path creation failed - Aborting")
+            quit()
+
+
+def save_figure(fig, save_path):
+    try:
+        plt.savefig(os.path.join(save_path))
+    except:
+        print("Unexpected error saving plot:", sys.exc_info())
 
 
 if __name__ == '__main__':
