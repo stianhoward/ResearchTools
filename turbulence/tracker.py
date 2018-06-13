@@ -31,7 +31,7 @@ import os
 
 # Constants
 FRAME_MIN = 10
-FRAME_MAX = 300
+FRAME_MAX = 600
 X_MIN = 450
 X_MAX = 650
 Y_MIN = 350
@@ -124,6 +124,7 @@ def create_image(data, image, title=''):
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
     plt.imshow(image)
+    # plt.imshow(image[Y_MIN:Y_MAX,X_MIN:X_MAX])
     for particle in particles:
         ax1.plot(data.loc[particle].reset_index()['x'], data.loc[particle].reset_index()['y'], label = particle)
     plt.legend(loc='upper left')
