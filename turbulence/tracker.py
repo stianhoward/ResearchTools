@@ -39,15 +39,25 @@ Y_MAX = 550
 
 
 def main():
+    single_tracking()
+
+
+def single_tracking(save = True):
     # Inputs
     data_path = request_file_path("Select CSV file to open", os.path.expanduser('~'), (("CSV files","*.csv"),("all files","*.*")))
     end_image = load_image(data_path,FRAME_MAX)
     
     # Operations
-    particle_tracking(data_path,end_image)
+    figure = particle_tracking(data_path,end_image)
+    if save:
+        save_path = request_save_loc(data_path)
+        save_figure(figure, save_path)
+        plt.close()
+    else:
+        return figure
 
 
-def request_file_path(win_name, start_dir, file_types = ("all files","*.*"), abort = True):
+def request_file_path(win_name="Select a file", start_dir = '/', file_types = ("all files","*.*"), abort = True):
     # Create window instance, and hide it then ask for the directory
     try:
         root = Tk()
@@ -86,15 +96,10 @@ def load_image(data_path,end_frame):
 
 
 def particle_tracking(data_path, end_image):
-    # Processing
     raw_data = import_data(data_path)
     data = process_data(raw_data)
     figure = create_image(data,end_image)
-
-    #Outputs
-    save_path = request_save_loc(data_path)
-    save_figure(figure, save_path)
-    plt.close()
+    return figure
 
 
 def import_data(path):
@@ -134,7 +139,7 @@ def create_image(data, image, title=''):
     return fig
 
 
-def request_save_loc(data_path):
+def request_save_loc(data_path = os.path.expanduser('~')):
     try:
         root = Tk()
         root.withdraw()
@@ -155,7 +160,9 @@ def request_save_loc(data_path):
             quit()
 
 
-def save_figure(fig, save_path):
+def save_figure(fig, save_path = ''):
+    if save_path == '':
+        save_path = request_save_loc()
     try:
         plt.savefig(os.path.join(save_path))
     except:
