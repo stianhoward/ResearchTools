@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from tkinter import filedialog
+from tkinter import *
 import time
 import glob
 import sys
@@ -177,7 +178,7 @@ def quiver_plot(data, title, save_path, img):
 def load_paths(base_path, make_save_dir = True):
     paths = []
     # locate films in the path
-    films = glob.glob(base_path + 'Film[1-9]')
+    films = glob.glob(os.path.join(base_path, 'Film[1-9]'))
     for film in films:
         film = film + '/'
         valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
@@ -227,11 +228,12 @@ def collect_data(paths):
             print("Unexpected error inporting CSV:", sys.exc_info())
 
         # Extract relevent parts of imported data
-        data = raw_data.loc[:,['x','y','dr']]
+        data = raw_data.loc[:,['x','y','dr','dy']]
 
         # Set data to 50 pixel chunks
         data['x'] = data['x'].apply(lambda x: custom_round(x, base = 50))
         data['y'] = data['y'].apply(lambda y: custom_round(y, base = 50))
+        data['dr'] = data['dr'].multiply(np.sign(data['dy'].multiply(-1)))
 
         # Organize the data by x and y, averaging velocities
         data = data.groupby(['x','y']).mean()
@@ -263,7 +265,10 @@ def scatter_plot(data,title):
 
 
 if __name__ == '__main__':
-    directory = filedialog.askdirectory()
-    if directory != "":
+    root = Tk()
+    root.withdraw()
+    directory = filedialog.askdirectory(initialdir=os.path.expanduser('~'))
+    root.destroy()
+    if directory != ():
         base_path = directory
     main(base_path)
