@@ -22,7 +22,7 @@ import skimage
 import glob
 import os
 import sys
-from tkinter import filedialog
+from tkinter import filedialog, Tk
 from joblib import Parallel, delayed
 from timeit import default_timer as timer
 
@@ -36,13 +36,13 @@ base_path = '/home/stian/Desktop/2018-05-23/'
 
 def main(base_path):
     # Identify all films recorded
-    films = glob.glob(base_path + 'Film[1-9]')
+    films = glob.glob(os.path.join(base_path , 'Film[1-9]'))
     if films != []:
         print(films)
         for film in films:
             film = film + '/'
             # Identify, and iterate through, scenes for each film
-            dirnames = glob.glob(film + '[1-9]')
+            dirnames = glob.glob(os.path.join(film + '[1-9]'))
             for number in dirnames:
                 print("Analyzing " + number)
                 # Analyze scene images, filter out sparse data, and export data
@@ -175,7 +175,10 @@ def export_csv(t1, film, number):
 
 
 if __name__ == '__main__':
+    root = Tk()
+    root.withdraw()
     directory = filedialog.askdirectory()
+    root.destroy()
     if directory != "":
         base_path = directory
     main(base_path)
