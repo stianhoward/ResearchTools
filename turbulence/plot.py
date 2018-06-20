@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from tkinter import filedialog
-from tkinter import *
+from tkinter import Tk
 import time
 import glob
 import sys
@@ -118,8 +118,8 @@ def vector_plot(raw_data, title, save_path, save_name, film_dir):
     data = raw_data.loc[:,['x','y','dx','dy']]
 
    # Set data to 50 pixel chunks
-    data['x'] = data['x'].apply(lambda x: custom_round(x, base = 50))
-    data['y'] = data['y'].apply(lambda y: custom_round(y, base = 50))
+    data['x'] = data['x'].apply(lambda x: custom_round(x, base = 35))
+    data['y'] = data['y'].apply(lambda y: custom_round(y, base = 35))
 
     # Organize the data by x and y, averaging velocities
     data = data.groupby(['x','y']).mean()
@@ -271,4 +271,6 @@ if __name__ == '__main__':
     root.destroy()
     if directory != ():
         base_path = directory
+    else:
+        quit()
     main(base_path)

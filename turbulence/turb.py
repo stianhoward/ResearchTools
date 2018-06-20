@@ -38,22 +38,24 @@ def main(base_path):
     # Identify all films recorded
     films = glob.glob(os.path.join(base_path , 'Film[1-9]'))
     if films != []:
-        print(films)
+        print('analyzing ', len(films), ' films')
         for film in films:
-            film = film + '/'
-            # Identify, and iterate through, scenes for each film
-            dirnames = glob.glob(os.path.join(film + '[1-9]'))
+            dirnames = glob.glob(os.path.join(film, '[1-9]'))
             for number in dirnames:
-                print("Analyzing " + number)
-                # Analyze scene images, filter out sparse data, and export data
-                all_results = analyze_frames(film, number)
-                t1 = tp.filter_stubs(all_results,10)
-                export_csv(t1, film, number)                
+                analyze_data(number)        
     else:
         print("No films found. Check path to days' films")
 
 
-def analyze_frames(film, number):
+def analyze_data(path):
+    print("Analyzing " + path)
+    # Analyze scene images, filter out sparse data, and export data
+    all_results = analyze_frames(path)
+    t1 = tp.filter_stubs(all_results,10)
+    export_csv(t1, path)
+
+def analyze_frames(number):
+    film = os.path.dirname(number)
     # Format image sequence for processing
     frames = pims.ImageSequence(number+'//*.bmp', process_func=thresh)
     datastorename = film+'data-t'+number.strip()[-1]+'.h5'
@@ -143,7 +145,8 @@ def normalize_pictures(frames, sequence, s):
     print('')   # Prevent progress message deletion
 
 
-def export_csv(t1, film, number):
+def export_csv(t1, number):
+    film = os.path.dirname(number)
     data = pd.DataFrame()
     num_particles = str(len(set(t1.particle)))
     i = 0
@@ -177,7 +180,7 @@ def export_csv(t1, film, number):
 if __name__ == '__main__':
     root = Tk()
     root.withdraw()
-    directory = filedialog.askdirectory()
+    directory = filedialog.askdirectory(initialdir=os.path.expanduser('~'))
     root.destroy()
     if directory != "":
         base_path = directory

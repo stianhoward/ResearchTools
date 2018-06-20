@@ -24,7 +24,7 @@ def ReynoldsNumber(v):
     visc  = 0.052                #vescocity of 8CB in Pa s
     L     = 0.003556             #width of channel in m
     L     = 0.00245
-    pd    = 1000.0               #density of 8CB in kg m^-3
+    pd    = 960.0               #density of 8CB in kg m^-3
     Re = v*L*pd/visc
     return Re 
 
