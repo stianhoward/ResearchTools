@@ -24,14 +24,10 @@ import os
 import sys
 from tkinter import filedialog, Tk
 from joblib import Parallel, delayed
-from timeit import default_timer as timer
 
 
 #User options#
-THRESH = 60
-#Folder to analyze
-# base_path = '/media/stian/Evan Dutch/Turbulence/2018-05-21/'
-base_path = '/home/stian/Desktop/2018-05-23/'
+THRESH = 30
 
 
 def main(base_path):
@@ -42,30 +38,27 @@ def main(base_path):
         for film in films:
             dirnames = glob.glob(os.path.join(film, '[1-9]'))
             for number in dirnames:
-                analyze_data(number)        
+                analyze_data(number, [130, 50])        
     else:
         print("No films found. Check path to days' films")
 
-
-def analyze_data(path):
+# Takes in path to scene, saving results to .h5 file and .CSV file
+def analyze_data(path, x_crop = [0,0]):
     print("Analyzing " + path)
     # Analyze scene images, filter out sparse data, and export data
-    all_results = analyze_frames(path)
+    all_results = analyze_frames(path,x_crop)
     t1 = tp.filter_stubs(all_results,10)
     export_csv(t1, path)
 
-def analyze_frames(number):
+def analyze_frames(number,x_crop):
     film = os.path.dirname(number)
     # Format image sequence for processing
     frames = pims.ImageSequence(number+'//*.bmp', process_func=thresh)
-    datastorename = film+'data-t'+number.strip()[-1]+'.h5'
+    datastorename = os.path.join(film,'data-t'+number.strip()[-1]+'.h5')
 
     with tp.PandasHDFStoreBig(datastorename) as s:
         # Normalize the pictures to black and white, and identify islands
-        start = timer()
-        normalize_pictures_parallel(frames,number,s)
-        end = timer()
-        print(end-start)
+        normalize_pictures_parallel(frames,number,s,x_crop)
         print('\t Identifying tracks and linking...')
 
         # Connect and track particles. Saving tracks to 's'.
@@ -76,21 +69,24 @@ def analyze_frames(number):
     return all_results
 
 
-def thresh(img):
-    # Set pixes to black or white according to the THRESH const
-    img[img<THRESH] = 0
-    img[img>THRESH] = 255
-    return skimage.util.img_as_int(img)
+def normalize_pictures(frames, sequence, s, x_crop):
+    num_frames = str(len(frames))
+    for num, img in enumerate(frames):                                     
+        print('\t Normalizing image ' + str(num + 1) + '/' + num_frames + '...\r', end='')
+        features = normalize(num,img,sequence,x_crop)
+        s.put(features)
+    print('')   # Prevent progress message deletion
 
 
-def normalize_pictures_parallel(frames, sequence, s):
-    features = Parallel(n_jobs=-2,verbose=1)(delayed(normalize)(num,img,sequence) for num,img in enumerate(frames))
+def normalize_pictures_parallel(frames, sequence, s, x_crop):
+    features = Parallel(n_jobs=-2,verbose=1)(delayed(normalize)(num,img,sequence,x_crop) for num,img in enumerate(frames))
     for feature in features:
         s.put(feature)
 
 
-def normalize(num,img,sequence):
+def normalize(num,img,sequence,x_crop):
     # Identify islands in the image
+    img = img[:,x_crop[0]:img.shape[1]-x_crop[1]]
     label_image,num_regions = skimage.measure.label(img, return_num=True)
 
     features = pd.DataFrame()
@@ -107,42 +103,18 @@ def normalize(num,img,sequence):
         if region.eccentricity > .78:
             continue
         features = features.append([{'y':region.centroid[0],
-                            'x':region.centroid[1],
+                            'x':region.centroid[1] + x_crop[0],
                             'area':region.area,
                             'frame':num,
                             'region': sequence }])
     return features
 
 
-def normalize_pictures(frames, sequence, s):
-    num_frames = str(len(frames))
-    for num, img in enumerate(frames):                                     
-        print('\t Normalizing image ' + str(num + 1) + '/' + num_frames + '...\r', end='')
-        features = normalize(num,img,sequence)
-        '''
-        # Identify islands in the image
-        label_image,num_regions = skimage.measure.label(img, return_num=True)
-
-        # If only one artifact (the post), skip to next frame
-        if num_regions <1:
-            break
-        features = pd.DataFrame()
-
-        # Check quality of islands found, and save if good enough
-        for region in skimage.measure.regionprops(label_image, intensity_image = img):
-            if region.area <20 or region.area >900000:
-                continue
-            if region.mean_intensity ==255:
-                continue
-            if region.eccentricity > .78:
-                continue
-            features = features.append([{'y':region.centroid[0],
-                                'x':region.centroid[1],
-                                'frame':num,
-                                'region': number }])
-        '''
-        s.put(features)
-    print('')   # Prevent progress message deletion
+def thresh(img):
+    # Set pixes to black or white according to the THRESH const
+    img[img<THRESH] = 0
+    img[img>THRESH] = 255
+    return skimage.util.img_as_int(img)
 
 
 def export_csv(t1, number):
@@ -173,7 +145,7 @@ def export_csv(t1, number):
                                 'particle': item,
                                 }])
     # Export the DataFrame to the CSV file
-    data.to_csv(film+'t'+number.strip()[-1]+'valuematrix.csv') # Export saved data to CSV file
+    data.to_csv(os.path.join(film,'t'+number.strip()[-1]+'valuematrix.csv')) # Export saved data to CSV file
     print('')
 
 
