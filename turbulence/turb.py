@@ -27,7 +27,7 @@ from joblib import Parallel, delayed
 
 
 #User options#
-THRESH = 30
+THRESH = 25
 
 
 def main(base_path):
@@ -38,7 +38,7 @@ def main(base_path):
         for film in films:
             dirnames = glob.glob(os.path.join(film, '[1-9]'))
             for number in dirnames:
-                analyze_data(number, [130, 50])        
+                analyze_data(number, [150, 60])        
     else:
         print("No films found. Check path to days' films")
 
@@ -96,17 +96,23 @@ def normalize(num,img,sequence,x_crop):
 
     # Check quality of islands found, and save if good enough
     for region in skimage.measure.regionprops(label_image, intensity_image = img):
-        if region.area <20 or region.area >900000:
+        if region.area <20 or region.area >10000:
             continue
         if region.mean_intensity ==255:
             continue
-        if region.eccentricity > .78:
-            continue
+        #if region.eccentricity > .78:
+        #    continue
         features = features.append([{'y':region.centroid[0],
                             'x':region.centroid[1] + x_crop[0],
                             'area':region.area,
                             'frame':num,
-                            'region': sequence }])
+                            'region': sequence,
+                            'y_min': region.bbox[0],
+                            'y_max': region.bbox[2],
+                            'x_min': region.bbox[1],
+                            'x_max': region.bbox[3],
+                            'eccentricity': region.eccentricity
+                            }])
     return features
 
 
@@ -133,16 +139,21 @@ def export_csv(t1, number):
         dvy = np.diff(sub.y)
         dvr = np.sqrt(dvx**2+dvy**2)
         # Insert the data into the DataFrame
-        for x, y, dx, dy, dvr, area, frame, region in zip(sub.x[:-1], sub.y[:-1], dvx, dvy, dvr, sub.area[:-1], sub.frame[:-1],sub.region[:-1]):
+        for x, y, dx, dy, dvr, eccentricity, area, frame, region, x_min, x_max, y_min, y_max in zip(sub.x[:-1], sub.y[:-1], dvx, dvy, dvr, sub.eccentricity[:-1], sub.area[:-1], sub.frame[:-1],sub.region[:-1],sub.x_min[:-1],sub.x_max[:-1],sub.y_min[:-1],sub.y_max[:-1]):
             data = data.append([{'dx': dx,
                                 'dy': dy,
                                 'dr': dvr,
                                 'x': x,
                                 'y': y,
+                                'eccentricity': eccentricity,
                                 'area':area,
                                 'frame': frame,
                                 'region': region,
                                 'particle': item,
+                                'x_min': x_min,
+                                'x_max': x_max,
+                                'y_min': y_min,
+                                'y_max': y_max
                                 }])
     # Export the DataFrame to the CSV file
     data.to_csv(os.path.join(film,'t'+number.strip()[-1]+'valuematrix.csv')) # Export saved data to CSV file
