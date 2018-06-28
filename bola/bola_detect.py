@@ -15,10 +15,34 @@ Input:
     - Frame range of the images
 '''
 
+import argparse
+import os
+import sys
 
-def main():
+'''
+sys.path.insert(0, os.path.abspath('../tracking'))
+
+import tracker
+'''
+
+def main(args):
+    if args.force is None:
+        print('here')
+    elif args.force == True:
+        print('2') 
+    print(arguments)
     return
 
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Identify and slice bolas.')
+    parser.add_argument('--force', type=bool, help = "Force recalculation. Default = False")
+    parser.add_argument('--border', type=int, help = "Number of pixels to buffer image with.")
+
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == '__main__':
-    main()
+    arguments = parse_arguments()
+    main(arguments)
