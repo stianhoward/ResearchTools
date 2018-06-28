@@ -38,10 +38,6 @@ Y_MIN = 350
 Y_MAX = 550
 
 
-def main():
-    single_tracking()
-
-
 def single_tracking(save = True):
     # Inputs
     data_path = request_file_path("Select CSV file to open", os.path.expanduser('~'), (("CSV files","*.csv"),("all files","*.*")))
@@ -170,4 +166,4 @@ def save_figure(fig, save_path = ''):
 
 
 if __name__ == '__main__':
-    main()
+    single_tracking()
