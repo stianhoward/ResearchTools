@@ -13,8 +13,9 @@ tools:
 import glob
 import os
 import sys
-from tkinter import filedialog
+from tkinter import filedialog, Tk
 import pandas as pd
+import matplotlib as mpl
 
 
 def load_txt(filePath):
@@ -31,17 +32,6 @@ def load_txt(filePath):
     return location
 
 
-def find_csv_paths(base_path, make_save_dir = True):
-    paths = []
-    films = glob.glob(os.path.join(base_path, 'Film[1-9]'))
-    for film in films:
-        film = film + '/'
-        valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
-        for matrix in valuematrices:
-            paths.append(matrix)
-    return paths
-
-
 def get_multi_paths():
     dirselect = filedialog.Directory()
     dirs = []
@@ -55,6 +45,17 @@ def get_multi_paths():
     return dirs
 
 
+def get_directory(name = "select a directory: ", start_dir = os.path.expanduser('~')):
+    root = Tk()
+    root.withdraw()
+    directory = filedialog.askdirectory(initialdir= start_dir)
+    root.destroy()
+    if directory != ():
+        return directory
+    else:
+        return None
+
+
 def pd_import_csv(path):
     if os.path.isfile(path):
         try:
@@ -66,3 +67,26 @@ def pd_import_csv(path):
     else:
         print("File does not exist at: ", path)
         return None
+
+
+def retrieve_image(path):
+    if os.path.isfile(path):
+        try:
+            return mpl.image.imread(path)
+        except:
+            print("Failed to retrieve image as path is not a file.", sys.exc_info())
+            return None
+    else:
+        print("No file found at ", path)
+        return None
+
+
+def save_image(path, image):
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+    try:
+        mpl.image.imsave(path, image)
+        return
+    except:
+        print('Failed to save image to ', path, sys.exc_info())
+        return
