@@ -11,16 +11,19 @@ base_path is the path to the folder containing multiple films using
 the labs normal file structure.
 '''
 
+import glob
+import os
+import sys
+import time
+from tkinter import Tk, filedialog
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
-from tkinter import filedialog
-from tkinter import Tk
-import time
-import glob
-import sys
-import os
+import pandas as pd
+
+sys.path.insert(0,os.path.abspath("../tools"))
+import file_interface as fi
 
 FRAME_RATE= 7955        # FrameRate
 PIXEL_SIZE=.0044        # mm per pixel
@@ -54,25 +57,11 @@ def main(base_path):
                 print("Failed to open and process data for: " + open_path)
             
             # Import extra info about data set                   
-            location = load_location(os.path.join(film, matrix.strip()[-16], 'position.txt'))
+            location = fi.load_txt(os.path.join(film, matrix.strip()[-16], 'position.txt'))
             # Create and save Scatter plot of data
             scatter(raw_data, location, save_path, save_name)
             vector_plot(raw_data, location, save_path, save_name, film)
 
-
-def load_location(filePath):
-    #Try to open info about file location in 'position.txt'
-    try:
-        file = open(filePath)
-        location = file.read()
-        location = location.strip()
-        file.close()
-    except:
-        location = None
-        # Todo: Collect all of these to print at the end under one print.
-        print("No 'position.txt' file found in: " + filePath)
-
-    return location
 
 # Code from old scripts. Bad representation of data- mostly untouched
 def scatter(raw_data, location, save_path, save_name):
@@ -175,23 +164,6 @@ def quiver_plot(data, title, save_path, img):
     plt.close()
 
 
-def load_paths(base_path, make_save_dir = True):
-    paths = []
-    # locate films in the path
-    films = glob.glob(os.path.join(base_path, 'Film[1-9]'))
-    for film in films:
-        film = film + '/'
-        valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
-        for matrix in valuematrices:
-            paths.append(matrix)
-            '''
-            save_path = film + 'plots/'             #Should be in lower loop level???
-            if not os.path.exists(save_path) and make_save_dir:
-                os.makedirs(save_path)
-            '''
-    return paths
-
-
 def save_figure(fig, save_path, name = ''):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -206,7 +178,7 @@ def cross_flow(base_path):
     #Look into serparating by film...
     #Probably put some of this into a different function? Or loop through them here with edited load_paths?
     save_path = os.path.join(base_path, 'plots')
-    paths = load_paths(base_path)
+    paths = fi.find_csv_paths(base_path)
     # load in data and sort
     data = collect_data(paths)
     data = data.groupby(['y','source','x']).mean()
@@ -238,7 +210,7 @@ def collect_data(paths):
         # Organize the data by x and y, averaging velocities
         data = data.groupby(['x','y']).mean()
         data = data.reset_index()
-        source = load_location(os.path.join(os.path.dirname(path), path.strip()[-16], 'position.txt'))
+        source = fi.load_txt(os.path.join(os.path.dirname(path), path.strip()[-16], 'position.txt'))
         if source == None:
             source = path.strip()[-16]
         sorted = pd.DataFrame({'source':source,'x':data.x,'y':data.y,'dr':data.dr})

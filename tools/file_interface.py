@@ -1,0 +1,68 @@
+"""
+
+Collection of tools for file interaction
+
+tools:
+- loading position.txt files
+- selecting file
+- selecting directory(ies)
+
+
+
+"""
+import glob
+import os
+import sys
+from tkinter import filedialog
+import pandas as pd
+
+
+def load_txt(filePath):
+    #Try to open info about file location in 'position.txt'
+    try:
+        file = open(filePath)
+        location = file.read()
+        location = location.strip()
+        file.close()
+    except:
+        location = None
+        print("No 'position.txt' file found in: " + filePath)
+
+    return location
+
+
+def find_csv_paths(base_path, make_save_dir = True):
+    paths = []
+    films = glob.glob(os.path.join(base_path, 'Film[1-9]'))
+    for film in films:
+        film = film + '/'
+        valuematrices = glob.glob(film + 't[1-9]valuematrix.csv')
+        for matrix in valuematrices:
+            paths.append(matrix)
+    return paths
+
+
+def get_multi_paths():
+    dirselect = filedialog.Directory()
+    dirs = []
+    while True:
+        d = dirselect.show()
+        if not d: break
+        dirs.append(d)
+    if len(dirs)==0:
+        print('No paths selected, exiting...')
+        sys.exit
+    return dirs
+
+
+def pd_import_csv(path):
+    if os.path.isfile(path):
+        try:
+            data = pd.read_csv(path)
+            return data
+        except:
+            print("failed to read CSV file", sys.exc_info())
+            return None
+    else:
+        print("File does not exist at: ", path)
+        return None
