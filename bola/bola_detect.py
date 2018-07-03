@@ -50,6 +50,8 @@ def recalculate(paths):
     
 
 def bola_extraction(paths, save_path, border):
+    if border == None:
+        border = 10
     for path in paths:
         analyze_scene(path, save_path, border)
     return
@@ -70,7 +72,7 @@ def analyze_scene(path, save_path, border):
         for particle_id in particles:
             particle_data = data.loc[data['particle'] == particle_id]
             if check_bola(particle_data):
-                slice_bolas(particle_data, border, os.path.dirname(matrix), save_path)
+                slice_bolas(particle_data, border, save_path, os.path.dirname(matrix), particle_id)
                 save_bola_info(particle_id, particle_data, save_path, matrix)
  
 
@@ -106,41 +108,43 @@ def check_bola(particle_data):
 
 # Path is to the folder containing the Films
 # save_path is to directory for bolas 
-def slice_bolas(particle_data, border, path, save_path):
+def slice_bolas(particle_data, border, save_dir, path, particle_id):
     frames = np.unique(particle_data.reset_index()['frame'].values)
     region = np.unique(particle_data.reset_index()['region'].values)[0]
     for frame in frames:
         # Determine paths for image and saving
-        [save_path, image_path] = determin_directories(path, region, frame)
+        [save_path, image_path] = determine_directories(path, save_dir, region, frame, particle_id)
         image = fi.retrieve_image(image_path)
 
         #Crop and save the image to location
         frame_data = particle_data.loc[particle_data['frame'] == frame]
-        image = image[frame_data['y_min']:frame_data['y_max'], frame_data['x_min']:frame_data['x_max']]
+        image = image[frame_data['y_min'].values[0] - border :frame_data['y_max'].values[0] + border, frame_data['x_min'].values[0] - border:frame_data['x_max'].values[0] + border]
         fi.save_image(save_path, image)
 
 
-def determin_directories(path, region, frame):
+def determine_directories(path, save_path, region, frame,particle_id):
     # Path to save splices to
     tmp1 = os.path.split(region)
     tmp2 = os.path.split(tmp1[0])
-    save_path = os.path.join(path, tmp2[1], tmp1[1], (str(frame+1) + '.bmp'))
+    save_path = os.path.join(save_path, tmp2[1], tmp1[1], str(particle_id), (str(frame+1) + '.jpg'))
 
-    img_name = glob.glob(os.path.join(path, ("*" + ("00000" + str(frame+1))[-5:] + ".bmp")))
+    string = "??" + ("00000" + str(int(frame)+1))[-4:] + ".bmp"
+    img_name = glob.glob(os.path.join(path, tmp1[1], string))
     image_path = os.path.join(path, tmp1[1], img_name[0])
     return (save_path, image_path)
 
 
 def save_bola_info(particle_id, particle_data, save_path, matrix):
-    with open(os.path.join(os.path.dirname(save_path), "info.txt"),'w') as file:
-        file.wrine('Used CSV at: '+ matrix)
-        file.write('CSV generated data at from: ' + np.unique(particle_data['region']))
-        text = fi.load_txt(os.path.join(os.path.dirname(matrix), os.path.split(os.path.dirname(matrix))[1], 'position.txt'))
+    save_path = os.path.join(save_path, os.path.split(os.path.dirname(matrix))[1], matrix[-16], "info.txt")
+    with open(save_path,'w') as file:
+        file.write(str('Used CSV at: '+ matrix + '\n'))
+        file.write('CSV generated data at from: ' + str(np.unique(particle_data['region'])) + '\n')
+        text = str(fi.load_txt(os.path.join(os.path.dirname(matrix), matrix[-16], 'position.txt')) + '\n')
         if text == None:
-            file.write('Position and flow info: Failed to locate position.txt file')
+            file.write('Position and flow info: Failed to locate position.txt file' + '\n')
         else: 
-            file.write('Position and flow info: '+ text)
-        file.write('Frame range: '+ particle_data['frame'].min()+ ' - '+ particle_data['frame'].max())
+            file.write('Position and flow info: '+ text + '\n')
+        file.write(str('Frame range: '+ str(particle_data['frame'].min()) + ' - '+ str(particle_data['frame'].max())) + '\n')
 
 
 def parse_arguments():
