@@ -65,7 +65,7 @@ def analyze_scene(path, save_path, border):
     # Iterate through each CSV file
     for matrix in data_matrices:
         raw_data = fi.pd_import_csv(matrix)
-        data = raw_data.loc[:,['particle', 'eccentricity', 'x_min', 'x_max', 'y_min', 'y_max', 'frame', 'region']]
+        data = raw_data.loc[:,['particle', 'eccentricity', 'x_min', 'x_max', 'y_min', 'y_max', 'frame', 'region', 'area']]
         particles = np.unique(data.reset_index()['particle'].values)
         
         # Iterate through each particle
@@ -97,9 +97,12 @@ def check_bola(particle_data):
     min_frame = particle_data.loc[particle_data['eccentricity'] == ecc_min]['frame'].values[0]
     ecc_max = particle_data['eccentricity'].max()
     max_frame = particle_data.loc[particle_data['eccentricity'] == ecc_max]['frame'].values[0]
-    if ecc_min > 0.1 or ecc_max < 0.7:
+    if ecc_min > 0.7 or ecc_max < 0.9:
         return False
     if max_frame > min_frame:
+        return False
+    
+    if particle_data['area'].mean() < 100:
         return False
     
     # Additional constraints
@@ -117,8 +120,7 @@ def slice_bolas(particle_data, border, save_dir, path, particle_id):
         image = fi.retrieve_image(image_path)
 
         #Crop and save the image to location
-        frame_data = particle_data.loc[particle_data['frame'] == frame]
-        image = image[frame_data['y_min'].values[0] - border :frame_data['y_max'].values[0] + border, frame_data['x_min'].values[0] - border:frame_data['x_max'].values[0] + border]
+        image = crop_image(image, particle_data, frame, border)
         fi.save_image(save_path, image)
 
 
@@ -132,6 +134,26 @@ def determine_directories(path, save_path, region, frame,particle_id):
     img_name = glob.glob(os.path.join(path, tmp1[1], string))
     image_path = os.path.join(path, tmp1[1], img_name[0])
     return (save_path, image_path)
+
+
+def crop_image(image, particle_data, frame, border):
+    frame_data = particle_data.loc[particle_data['frame'] == frame]
+    size = image.shape
+    y_min = frame_data['y_min'].values[0] - border
+    if y_min < 0:
+        y_min = 0
+    y_max = frame_data['y_max'].values[0] + border
+    if y_max > size[0]:
+        y_max = size[0]
+    x_min = frame_data['x_min'].values[0] - border
+    if x_min < 0:
+        x_min = 0
+    x_max = frame_data['x_max'].values[0] + border
+    if x_max > size[1]:
+        x_max = size[1]
+    image = image[y_min:y_max , x_min:x_max]
+    return image
+        
 
 
 def save_bola_info(particle_id, particle_data, save_path, matrix):
