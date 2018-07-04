@@ -27,7 +27,7 @@ from joblib import Parallel, delayed
 
 
 #User options#
-THRESH = 25
+THRESH = 22
 
 
 def main(base_path):
@@ -38,7 +38,7 @@ def main(base_path):
         for film in films:
             dirnames = glob.glob(os.path.join(film, '[1-9]'))
             for number in dirnames:
-                analyze_data(number, [150, 60])        
+                analyze_data(number, [200, 100])        
     else:
         print("No films found. Check path to days' films")
 
@@ -109,8 +109,8 @@ def normalize(num,img,sequence,x_crop):
                             'region': sequence,
                             'y_min': region.bbox[0],
                             'y_max': region.bbox[2],
-                            'x_min': region.bbox[1],
-                            'x_max': region.bbox[3],
+                            'x_min': region.bbox[1] + x_crop[0],
+                            'x_max': region.bbox[3] + x_crop[0],
                             'eccentricity': region.eccentricity
                             }])
     return features
