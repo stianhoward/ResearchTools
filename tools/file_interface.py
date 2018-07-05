@@ -33,7 +33,7 @@ def load_txt(filePath):
 
 
 def get_multi_paths():
-    dirselect = filedialog.Directory()
+    dirselect = filedialog.Directory(initialdir= os.path.expanduser('~'))
     dirs = []
     while True:
         d = dirselect.show()
@@ -48,7 +48,7 @@ def get_multi_paths():
 def get_directory(name = "select a directory: ", start_dir = os.path.expanduser('~')):
     root = Tk()
     root.withdraw()
-    directory = filedialog.askdirectory(initialdir= start_dir)
+    directory = filedialog.askdirectory(title = name, initialdir= start_dir)
     root.destroy()
     if directory != ():
         return directory

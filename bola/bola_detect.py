@@ -97,7 +97,7 @@ def check_bola(particle_data):
     min_frame = particle_data.loc[particle_data['eccentricity'] == ecc_min]['frame'].values[0]
     ecc_max = particle_data['eccentricity'].max()
     max_frame = particle_data.loc[particle_data['eccentricity'] == ecc_max]['frame'].values[0]
-    if ecc_min > 0.7 or ecc_max < 0.9:
+    if ecc_min > 0.7 or ecc_max < 0.93:
         return False
     if max_frame > min_frame:
         return False
@@ -128,7 +128,8 @@ def determine_directories(path, save_path, region, frame,particle_id):
     # Path to save splices to
     tmp1 = os.path.split(region)
     tmp2 = os.path.split(tmp1[0])
-    save_path = os.path.join(save_path, tmp2[1], tmp1[1], str(particle_id), (str(frame+1) + '.jpg'))
+    tmp3 = os.path.split(tmp2[0])
+    save_path = os.path.join(save_path, tmp3[1], tmp2[1], tmp1[1], str(particle_id), (str(frame+1) + '.jpg'))
 
     string = "??" + ("00000" + str(int(frame)+1))[-4:] + ".bmp"
     img_name = glob.glob(os.path.join(path, tmp1[1], string))
@@ -157,7 +158,9 @@ def crop_image(image, particle_data, frame, border):
 
 
 def save_bola_info(particle_id, particle_data, save_path, matrix):
-    save_path = os.path.join(save_path, os.path.split(os.path.dirname(matrix))[1], matrix[-16], "info.txt")
+    tmp1 = os.path.split(os.path.dirname(matrix))
+    tmp2 = os.path.split(tmp1[0])
+    save_path = os.path.join(save_path, tmp2[1], tmp1[1], matrix[-16], str(particle_id), "info.txt")
     with open(save_path,'w') as file:
         file.write(str('Used CSV at: '+ matrix + '\n'))
         file.write('CSV generated data at from: ' + str(np.unique(particle_data['region'])) + '\n')
