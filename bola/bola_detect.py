@@ -102,10 +102,10 @@ def check_bola(particle_data):
     if max_frame > min_frame:
         return False
     
+    # Size of particel significant
     if particle_data['area'].mean() < 100:
         return False
     
-    # Additional constraints
     return True
 
 
@@ -131,8 +131,11 @@ def determine_directories(path, save_path, region, frame,particle_id):
     tmp3 = os.path.split(tmp2[0])
     save_path = os.path.join(save_path, tmp3[1], tmp2[1], tmp1[1], str(particle_id), (str(frame+1) + '.jpg'))
 
-    string = "??" + ("00000" + str(int(frame)+1))[-4:] + ".bmp"
+    string = "??" + ("00000" + str(int(frame)+1))[-5:] + ".bmp"
     img_name = glob.glob(os.path.join(path, tmp1[1], string))
+    if img_name == []:
+        string = "??" + ("00000" + str(int(frame)+1))[-4:] + ".bmp"
+        img_name = glob.glob(os.path.join(path, tmp1[1], string))
     image_path = os.path.join(path, tmp1[1], img_name[0])
     return (save_path, image_path)
 
