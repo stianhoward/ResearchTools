@@ -13,9 +13,10 @@ tools:
 import glob
 import os
 import sys
+from PIL import Image
+import numpy as np
 from tkinter import filedialog, Tk
 import pandas as pd
-import matplotlib as mpl
 
 
 def load_txt(filePath):
@@ -57,6 +58,9 @@ def get_directory(name = "select a directory: ", start_dir = os.path.expanduser(
 
 
 def pd_import_csv(path):
+    '''
+    returns Pandas Dataframe with data from CSV at path
+    '''
     if os.path.isfile(path):
         try:
             data = pd.read_csv(path)
@@ -72,20 +76,22 @@ def pd_import_csv(path):
 def retrieve_image(path):
     if os.path.isfile(path):
         try:
-            return mpl.image.imread(path)
+            img = Image.open(path)
+            return np.array(img)
         except:
-            print("Failed to retrieve image as path is not a file.", sys.exc_info())
+            print("Failed to retrieve image from path.", sys.exc_info())
             return None
     else:
         print("No file found at ", path)
         return None
 
 
-def save_image(path, image):
+def save_image(path, npArray):
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
     try:
-        mpl.image.imsave(path, image)
+        result = Image.fromarray((npArray).astype(np.uint8))
+        result.save(path)
         return
     except:
         print('Failed to save image to ', path, sys.exc_info())
