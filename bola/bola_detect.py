@@ -94,8 +94,11 @@ def check_bola(particle_data):
     
     # Eccentricity decreasing
     ecc_min = particle_data['eccentricity'].min()
+    # ecc_max = particle_data['eccentricity'].max()
+    ecc_max = particle_data.loc[particle_data['y_max'] < 765]['eccentricity'].max()
+    if np.isnan(ecc_max):
+        return False
     min_frame = particle_data.loc[particle_data['eccentricity'] == ecc_min]['frame'].values[0]
-    ecc_max = particle_data['eccentricity'].max()
     max_frame = particle_data.loc[particle_data['eccentricity'] == ecc_max]['frame'].values[0]
     if ecc_min > 0.7 or ecc_max < 0.93:
         return False
@@ -121,10 +124,11 @@ def slice_bolas(particle_data, border, save_dir, path, particle_id):
 
         #Crop and save the image to location
         image = crop_image(image, particle_data, frame, border)
-        fi.save_image(save_path, image)
+        fi.save_image(save_path, image, True)
 
 
 def determine_directories(path, save_path, region, frame,particle_id):
+    region = raw(region)
     # Path to save splices to
     tmp1 = os.path.split(region)
     tmp2 = os.path.split(tmp1[0])
@@ -136,9 +140,45 @@ def determine_directories(path, save_path, region, frame,particle_id):
     if img_name == []:
         string = "??" + ("00000" + str(int(frame)+1))[-4:] + ".bmp"
         img_name = glob.glob(os.path.join(path, tmp1[1], string))
-    image_path = os.path.join(path, tmp1[1], img_name[0])
+    try:
+        image_path = os.path.join(path, tmp1[1], img_name[0])
+    except:
+        print('no images found at location')
     return (save_path, image_path)
 
+
+def raw(string):
+    escape_dict={'\a':r'\a',
+                '\b':r'\b',
+                '\c':r'\c',
+                '\f':r'\f',
+                '\n':r'\n',
+                '\r':r'\r',
+                '\t':r'\t',
+                '\v':r'\v',
+                '\'':r'\'',
+                '\"':r'\"',
+                '\1':r'/1',
+                '\2':r'/2',
+                '\3':r'/3',
+                '\4':r'/4',
+                '\5':r'/5',
+                '\6':r'/6',
+                '\7':r'/7',
+                '\8':r'/8',
+                '\9':r'/9'}
+
+    for letter in string:
+        if letter == "\\":
+            string = string.replace(letter,"/")
+
+    new_string=''
+    for char in string:
+        try: 
+            new_string += escape_dict[char]
+        except KeyError: 
+            new_string += char
+    return new_string
 
 def crop_image(image, particle_data, frame, border):
     frame_data = particle_data.loc[particle_data['frame'] == frame]
