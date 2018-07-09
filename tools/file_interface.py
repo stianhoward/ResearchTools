@@ -14,6 +14,8 @@ import glob
 import os
 import sys
 from PIL import Image
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 from tkinter import filedialog, Tk
 import pandas as pd
@@ -86,12 +88,19 @@ def retrieve_image(path):
         return None
 
 
-def save_image(path, npArray):
+def save_image(path, npArray, color = False):
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
     try:
         result = Image.fromarray((npArray).astype(np.uint8))
         result.save(path)
+        if color:
+            plt.imshow(npArray)
+            name = os.path.split(path)
+            if not os.path.exists(os.path.join(name[0], 'png')):
+                os.makedirs(os.path.join(name[0], 'png'))
+            plt.savefig(os.path.join(name[0], 'png', name[1][:-3] + 'png'))
+            plt.close()
         return
     except:
         print('Failed to save image to ', path, sys.exc_info())
