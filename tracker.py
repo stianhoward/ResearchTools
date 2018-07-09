@@ -27,7 +27,7 @@ from joblib import Parallel, delayed
 
 
 #User options#
-THRESH = 22
+THRESH = 25
 
 
 def main(base_path):
