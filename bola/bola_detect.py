@@ -26,7 +26,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath('../tools'))
 import file_interface as fi
-sys.path.insert(0, os.path.abspath('../tracking'))
+sys.path.insert(0, os.path.abspath('..'))
 import tracker
 
 
