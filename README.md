@@ -4,6 +4,8 @@
 
 ### Liquid Crystal Turbulence Tools
 
-- **turb.py:** Analyzes series of frames taken of films and exports data in CSV format
+- **tracker.py** Main analysis script upon which the other scripts rely. Produces a CSV and H5 file for other scripts to read
+- **tracer.py** Traces particles in a defined scope. Exorts an image of the scene with the traces overlayed
 - **plot.py:** Reads in the CSV file produced from turb.py, and exports images showing plotted data in multiple forms
-- **tracker.py** Tracks individual particles in a defined reagion to display the path of on an image
+- **reynoldsnumber.py** Calculates reynolds number given an input velocity
+- **bola_detect.py** Reads the CSV to identify bolas in the scenes. Exports a directory of image snipets which slice out cropped images of the bolas
