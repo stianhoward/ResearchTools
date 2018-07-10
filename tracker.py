@@ -19,6 +19,7 @@ import trackpy as tp
 tp.ignore_logging()
 from skimage import data, color
 import skimage
+# warning.catch_warnings
 import glob
 import os
 import sys
@@ -63,7 +64,7 @@ def analyze_frames(number,x_crop):
 
         # Connect and track particles. Saving tracks to 's'.
         pred = tp.predict.ChannelPredict(10,minsamples=3)
-        for linked in pred.link_df_iter(s,15):
+        for linked in pred.link_df_iter(s,12):
             s.put(linked)
         all_results=s.dump()
     return all_results
@@ -139,6 +140,7 @@ def export_csv(t1, number):
         dvy = np.diff(sub.y)
         dvr = np.sqrt(dvx**2+dvy**2)
         # Insert the data into the DataFrame
+        # TODO: see about not doing this step and appending directly. This is what's making the script so slow
         for x, y, dx, dy, dvr, eccentricity, area, frame, region, x_min, x_max, y_min, y_max in zip(sub.x[:-1], sub.y[:-1], dvx, dvy, dvr, sub.eccentricity[:-1], sub.area[:-1], sub.frame[:-1],sub.region[:-1],sub.x_min[:-1],sub.x_max[:-1],sub.y_min[:-1],sub.y_max[:-1]):
             data = data.append([{'dx': dx,
                                 'dy': dy,
