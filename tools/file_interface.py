@@ -105,3 +105,12 @@ def save_image(path, npArray, color = False):
     except:
         print('Failed to save image to ', path, sys.exc_info())
         return
+
+def find_csv_paths(base_path):
+    paths = []
+    films = glob.glob(os.path.join(base_path, 'Film[1-9]'))
+    for film in films:
+        scenes = glob.glob(os.path.join(film,'t[1-9]valuematrix.csv'))
+        for scene in scenes:
+            paths.append(scene)
+    return paths
