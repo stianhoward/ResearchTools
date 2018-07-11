@@ -9,7 +9,16 @@ USE:
 - Simply run this script itself, editing the base_path argument below
 
 base_path is the path to the folder containing multiple films using 
-the labs normal file structure.
+a specific file structure.
+base_path
+    |--Film1
+    |   |--1
+    |   |   |--images
+    |   |--2
+    |   |   |--images
+    |   |--3
+    |--Film2
+    |   |--1
 '''
 
 import numpy as np
@@ -29,6 +38,7 @@ from joblib import Parallel, delayed
 
 #User options#
 THRESH = 25
+crop = [200,100] #Distance from left and right to crop out
 
 
 def main(base_path):
@@ -39,7 +49,7 @@ def main(base_path):
         for film in films:
             dirnames = glob.glob(os.path.join(film, '[1-9]'))
             for number in dirnames:
-                analyze_data(number, [200, 100])        
+                analyze_data(number, crop)        
     else:
         print("No films found. Check path to days' films")
 

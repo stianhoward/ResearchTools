@@ -2,13 +2,10 @@
     Script for importing csv file produced from turb.py, and tracking individual particles
     in specific selectrion of frames/ areas of a scene. 
 
-    Goals:
     - Inputs
         - Import csv files of relevance
-        - Request frames desired. 
-            - determine through request, hard code, interactive, config file, etc.
-        - Hard code relevant region. 
-            - Potentially make this requested, but better to default to hard code as relatively consistent range
+        - Hard code desired frames
+        - Hard code region of images
     - Processing
         - Limit to particle size/ mass in order to limit too much. Might need added turb.py parameter and re-process
         - Track movement of particle frame by frame, and store path
@@ -31,7 +28,7 @@ import os
 
 # Constants
 FRAME_MIN = 10
-FRAME_MAX = 600
+FRAME_MAX = 80
 X_MIN = 450
 X_MAX = 650
 Y_MIN = 350

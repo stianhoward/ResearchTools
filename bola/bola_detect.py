@@ -6,8 +6,10 @@ then decreased towards thei end of life in the dataset.
 
 Input:
 - CSV file containing particle information from tracker.py
- Output:
- - Directory containing structured images of only the particles in question
+- Image directory with images for the bola to be sliced out of
+
+Output:
+- Directory containing structured images of only the particles in question
     - Images to be sorted by Data_Date -> Film -> Scene -> Particle ->
 - .TXT file containing relevant information about the original dataset
     - Source directory (contains Date, film, scene etc)
@@ -31,10 +33,14 @@ import tracker
 
 
 def main(args):
+    # Get paths from users. Replace these with strings to use a list of directories.
     paths = fi.get_multi_paths()
     save_path = fi.get_directory("Select a save directory")
+    # Check if requested to re-calculate the data
     if args.force == True:
         paths = recalculate(paths)
+    
+    # Identify and export bolas
     bola_extraction(paths,save_path,args.border)
 
 
@@ -86,6 +92,11 @@ def find_csv_paths(base_path):
     return paths
 
 
+'''
+***********************************
+Conditions for qualifying a bola
+***********************************
+'''
 # return True or False depending on whether or not bola conditions are met
 def check_bola(particle_data):
     # Number of frames

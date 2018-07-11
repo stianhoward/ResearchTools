@@ -5,7 +5,7 @@ This script inports the data, exported by turb.py in
 
 USE:
 - Call the plot.main(base_path) function from another script
-- Simply run this script itself, editing the base_path argument below
+- Simply run this script itself
 
 base_path is the path to the folder containing multiple films using 
 the labs normal file structure.
