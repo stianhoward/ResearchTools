@@ -29,9 +29,9 @@ import os
 # Constants
 FRAME_MIN = 10
 FRAME_MAX = 80
-X_MIN = 450
-X_MAX = 650
-Y_MIN = 350
+X_MIN = 300
+X_MAX = 800
+Y_MIN = 100
 Y_MAX = 550
 
 
@@ -110,7 +110,7 @@ def process_data(raw_data):
     data = data[data['frame'].between(FRAME_MIN, FRAME_MAX) & data['x'].between(X_MIN, X_MAX) & data['y'].between(Y_MIN, Y_MAX)]
     data.groupby(['particle','frame']).mean()
     if data.empty:
-        print("Data in bounds is empty - Aborting")
+        print("No data is selected frames/ bounds. Please change bounds or frames to include data.")
         quit()
     else:
         return data
