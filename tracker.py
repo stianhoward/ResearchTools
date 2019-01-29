@@ -27,22 +27,28 @@ import pims
 import trackpy as tp
 tp.ignore_logging()
 from skimage import data, color
+from skimage.filters import threshold_local
 import skimage
 # warning.catch_warnings
 import glob
 import os
 import sys
+import cv2 as cv
 from tkinter import filedialog, Tk
 from joblib import Parallel, delayed
 
 
 #User options#
-THRESH = 25
-crop = [200,100] #Distance from left and right to crop out
+THRESH = 134
+crop = [0,00] #Distance from left and right to crop out
 
 
 def main(base_path):
     # Identify all films recorded
+    def warn(*args, **kwargs):
+        pass
+    import warnings
+    warnings.warn = warn
     films = glob.glob(os.path.join(base_path , 'Film[1-9]'))
     if films != []:
         print('analyzing ', len(films), ' films')
@@ -58,13 +64,13 @@ def analyze_data(path, x_crop = [0,0]):
     print("Analyzing " + path)
     # Analyze scene images, filter out sparse data, and export data
     all_results = analyze_frames(path,x_crop)
-    t1 = tp.filter_stubs(all_results,10)
+    t1 = tp.filter_stubs(all_results,15)
     export_csv(t1, path)
 
 def analyze_frames(number,x_crop):
     film = os.path.dirname(number)
     # Format image sequence for processing
-    frames = pims.ImageSequence(number+'//*.bmp', process_func=thresh)
+    frames = pims.ImageSequence(number+'//*.bmp', as_grey = True)
     datastorename = os.path.join(film,'data-t'+number.strip()[-1]+'.h5')
 
     with tp.PandasHDFStoreBig(datastorename) as s:
@@ -73,8 +79,8 @@ def analyze_frames(number,x_crop):
         print('\t Identifying tracks and linking...')
 
         # Connect and track particles. Saving tracks to 's'.
-        pred = tp.predict.ChannelPredict(10,minsamples=3)
-        for linked in pred.link_df_iter(s,12):
+        pred = tp.predict.ChannelPredict(5,minsamples=3)
+        for linked in pred.link_df_iter(s,6):
             s.put(linked)
         all_results=s.dump()
     return all_results
@@ -98,6 +104,12 @@ def normalize_pictures_parallel(frames, sequence, s, x_crop):
 def normalize(num,img,sequence,x_crop):
     # Identify islands in the image
     img = img[:,x_crop[0]:img.shape[1]-x_crop[1]]
+
+    # block_size = 53
+    # binary_adaptive = img > threshold_local(img, block_size, offset=12)
+    # img = np.array(binary_adaptive,'uint8') * 255
+    img = thresh(img)
+
     label_image,num_regions = skimage.measure.label(img, return_num=True)
 
     features = pd.DataFrame()
@@ -109,10 +121,10 @@ def normalize(num,img,sequence,x_crop):
     for region in skimage.measure.regionprops(label_image, intensity_image = img):
         if region.area <20 or region.area >10000:
             continue
-        if region.mean_intensity ==255:
+        if region.mean_intensity ==0:
             continue
-        #if region.eccentricity > .78:
-        #    continue
+        if region.eccentricity > .78:
+            continue
         features = features.append([{'y':region.centroid[0],
                             'x':region.centroid[1] + x_crop[0],
                             'area':region.area,
@@ -122,15 +134,19 @@ def normalize(num,img,sequence,x_crop):
                             'y_max': region.bbox[2],
                             'x_min': region.bbox[1] + x_crop[0],
                             'x_max': region.bbox[3] + x_crop[0],
-                            'eccentricity': region.eccentricity
+                            #'eccentricity': region.eccentricity
                             }])
     return features
 
 
 def thresh(img):
     # Set pixes to black or white according to the THRESH const
-    img[img<THRESH] = 0
+    """
+    img[img<THRESH] = THRESH
     img[img>THRESH] = 255
+    img[img==THRESH] = 0
+    """
+    img = cv.adaptiveThreshold(img,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,11,2)
     return skimage.util.img_as_int(img)
 
 
@@ -151,13 +167,13 @@ def export_csv(t1, number):
         dvr = np.sqrt(dvx**2+dvy**2)
         # Insert the data into the DataFrame
         # TODO: see about not doing this step and appending directly. This is what's making the script so slow
-        for x, y, dx, dy, dvr, eccentricity, area, frame, region, x_min, x_max, y_min, y_max in zip(sub.x[:-1], sub.y[:-1], dvx, dvy, dvr, sub.eccentricity[:-1], sub.area[:-1], sub.frame[:-1],sub.region[:-1],sub.x_min[:-1],sub.x_max[:-1],sub.y_min[:-1],sub.y_max[:-1]):
+        for x, y, dx, dy, dvr, area, frame, region, x_min, x_max, y_min, y_max in zip(sub.x[:-1], sub.y[:-1], dvx, dvy, dvr, sub.area[:-1], sub.frame[:-1],sub.region[:-1],sub.x_min[:-1],sub.x_max[:-1],sub.y_min[:-1],sub.y_max[:-1]):
             data = data.append([{'dx': dx,
                                 'dy': dy,
                                 'dr': dvr,
                                 'x': x,
                                 'y': y,
-                                'eccentricity': eccentricity,
+                                #'eccentricity': eccentricity,
                                 'area':area,
                                 'frame': frame,
                                 'region': region,
