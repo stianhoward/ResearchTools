@@ -39,23 +39,24 @@ def analyze(baseroute, location, folder):
     ySpace = np.linspace(0,data['y'].max(),200)
     velGrid = griddata( (pts[:,0],pts[:,1]), valueVel, (xSpace[None,:],ySpace[:,None]),method='cubic')
     levels = np.linspace(0,4,30)
-    CS = plt.contourf(xSpace[::1], ySpace[::-1],velGrid,levels=levels)
+    plt.contourf(xSpace[::1], ySpace[::-1],velGrid,levels=levels)
     plt.colorbar()
 
     #now, plot this over the frame image
-    fig,ax = plt.subplots()
+    plt.subplots()
     im = mpl.image.imread(glob.glob('*.bmp')[0])
-    idx = pd.IndexSlice
     aveDataFiltered=aveData.loc[keys]
     plt.quiver(aveDataFiltered.index.get_level_values(0),aveDataFiltered.index.get_level_values(1),aveDataFiltered['u'],aveDataFiltered['v'])
     plt.imshow(im,alpha=.5)
     plt.show()
     #now, try to grid this and make a contour plot
+    '''
     def velGrid(x,y):
         try:
             return valueVel[x,y]
         except KeyError:
             return 0.
+    '''
 
 
 #First, read in the data
