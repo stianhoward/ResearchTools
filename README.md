@@ -9,3 +9,10 @@
 - **plot.py:** Reads in the CSV file produced from turb.py, and exports images showing plotted data in multiple forms
 - **reynoldsnumber.py** Calculates reynolds number given an input velocity
 - **bola_detect.py** Reads the CSV to identify bolas in the scenes. Exports a directory of image snipets which slice out cropped images of the bolas
+
+
+### Bifurcation Analysis
+
+- **data-vis.py** Visualization of flow of a single area of a video
+- **image_stitching.py** Stitches two sets of images together into one video
+
