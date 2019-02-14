@@ -32,7 +32,7 @@ def analyze(baseroute, location, folder):
     aveData = groups.agg('mean')
     vel = aveData['u']**2+aveData['v']**2
     valueVel = vel[~vel.isnull()]
-    #valueVel=valueVel[np.abs(valueVel)<4]
+    valueVel=valueVel[np.abs(valueVel)<800]
     keys = valueVel.keys()
     pts = np.array([(k[0],k[1]) for k in keys])
     xSpace = np.linspace(0,data['x'].max(),200)
