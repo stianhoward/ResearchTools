@@ -24,13 +24,47 @@ def readFiles (path, files):
     data = pd.concat(data)
     return data
 
-def alter(data):
-    return data
+def centerSpeeds(data, title = 'VectorPlot'):
+    data = data.copy()
+    # Function used in setting bin widths
+    def custom_round(x, base=20):
+        return int(base * round(x/base)) 
+    
+    # Sort the data
+    data = data[data['filtered']==0]
 
-def contourPlot(data, imagePath):
-    return
+    # Set data to 35 pixel chunks
+    base = 20
 
-def vectorPlot(data, imagePath):
+    #data['x'] = data['x'].apply(lambda x: custom_round(x, base = 35))
+    #data['x'].apply(lambda x: custom_round(x, base = 40))
+    #data.x = base * round(data.x/base)
+    #data.loc[:,'x'] = base * round(data.x/base)
+    data.loc[:,'x'] = data['x'].map(lambda x: custom_round(x, base))
+    #data['y'] = data['y'].apply(lambda y: custom_round(y, base = 35))
+    #data.loc[:,'y'].apply(lambda y: custom_round(y, base = 35))
+    #data.y = base * round(data.y/base)
+    #data.loc[:,'y'] = base * round(data.y/base)
+    data.loc[:,'y'] = data['y'].map(lambda y: custom_round(y,base))
+
+    # Organize the data by x and y, averaging velocities
+    data = data.groupby(['y','x']).mean()
+    data = data.reset_index()
+    data = data.fillna(0)
+
+    # Create the x and velocity arrays
+    y_selected = data[data['y'] == 400]
+    x = y_selected['x']
+    velocities = np.sqrt(np.square(y_selected['u'])  + np.square(y_selected['v']))
+
+    # Plot the data
+    plt.figure(2)
+    plt.plot(x,velocities)
+    plt.title(title)
+    plt.show()
+    
+
+def vectorPlot(data, imagePath, title = 'VectorPlot'):
     # Import background image
     os.chdir(imagePath)
     im = mpl.image.imread(glob.glob('*.bmp')[0])
@@ -42,16 +76,17 @@ def vectorPlot(data, imagePath):
     aveData = groups.agg('mean')
     vel = aveData['u']**2+aveData['v']**2
     valueVel = vel[~vel.isnull()]
-    valueVel=valueVel[np.abs(valueVel)<800]
+    valueVel=valueVel[np.abs(valueVel)<3]
     keys = valueVel.keys()
 
-    plt.subplots()
+    # Plot the data
+    plt.figure(1)
     aveDataFiltered=aveData.loc[keys]
     plt.quiver(aveDataFiltered.index.get_level_values(0),aveDataFiltered.index.get_level_values(1),aveDataFiltered['u'],aveDataFiltered['v'])
+    plt.title(title)
     plt.imshow(im,alpha=.5)
-    plt.show()
 
-baseFilePath = '/media/stian/Evan Dutch/Bifurcation/12805/05-02-2019/stitched/285/'
+baseFilePath = '/media/stian/Evan Dutch/Bifurcation/12805/05-02-2019/stitched/207/'
 files = '(\d{4})_(\d{4}).txt'
 frontFilePath = 'front/'
 backFilePath = 'back/'
@@ -68,9 +103,8 @@ frontData = frontData[frontData['x'] > (front_img_px - 690)]
 frontData['x'] = frontData['x'] + (1280 - 640 - back_img_px)
 # join dataframes
 data = pd.concat([backData,frontData])
-# Alter the data for visualization
-data = alter(data)
-
 data['y'] = data['y'].max() - data['y'] + 15
-contourPlot(data, baseFilePath)
-vectorPlot(data, baseFilePath)
+
+
+vectorPlot(data, baseFilePath, baseFilePath[-4:-1])
+centerSpeeds(data, baseFilePath[-4:-1])
