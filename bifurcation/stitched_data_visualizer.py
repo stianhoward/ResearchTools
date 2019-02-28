@@ -36,15 +36,7 @@ def centerSpeeds(data, title = 'VectorPlot'):
     # Set data to 35 pixel chunks
     base = 20
 
-    #data['x'] = data['x'].apply(lambda x: custom_round(x, base = 35))
-    #data['x'].apply(lambda x: custom_round(x, base = 40))
-    #data.x = base * round(data.x/base)
-    #data.loc[:,'x'] = base * round(data.x/base)
     data.loc[:,'x'] = data['x'].map(lambda x: custom_round(x, base))
-    #data['y'] = data['y'].apply(lambda y: custom_round(y, base = 35))
-    #data.loc[:,'y'].apply(lambda y: custom_round(y, base = 35))
-    #data.y = base * round(data.y/base)
-    #data.loc[:,'y'] = base * round(data.y/base)
     data.loc[:,'y'] = data['y'].map(lambda y: custom_round(y,base))
 
     # Organize the data by x and y, averaging velocities
@@ -58,13 +50,12 @@ def centerSpeeds(data, title = 'VectorPlot'):
     velocities = np.sqrt(np.square(y_selected['u'])  + np.square(y_selected['v']))
 
     # Plot the data
-    plt.figure(2)
+    plt.figure()
     plt.plot(x,velocities)
     plt.title(title)
-    plt.show()
     
 
-def vectorPlot(data, imagePath, title = 'VectorPlot'):
+def vectorPlot(data, imagePath, filter = 400, title = 'VectorPlot', plot = 1):
     # Import background image
     os.chdir(imagePath)
     im = mpl.image.imread(glob.glob('*.bmp')[0])
@@ -76,17 +67,19 @@ def vectorPlot(data, imagePath, title = 'VectorPlot'):
     aveData = groups.agg('mean')
     vel = aveData['u']**2+aveData['v']**2
     valueVel = vel[~vel.isnull()]
-    valueVel=valueVel[np.abs(valueVel)<3]
+    valueVel=valueVel[np.abs(valueVel)<filter]
     keys = valueVel.keys()
 
     # Plot the data
-    plt.figure(1)
+    plt.figure()
     aveDataFiltered=aveData.loc[keys]
     plt.quiver(aveDataFiltered.index.get_level_values(0),aveDataFiltered.index.get_level_values(1),aveDataFiltered['u'],aveDataFiltered['v'])
-    plt.title(title)
+    plt.title(title + ' Filter: ' + str(filter), fontsize = 20)
     plt.imshow(im,alpha=.5)
 
-baseFilePath = '/media/stian/Evan Dutch/Bifurcation/12805/05-02-2019/stitched/207/'
+
+
+baseFilePath = '/media/stian/Evan Dutch/Bifurcation/12805/DataSet2/stitched/205/'
 files = '(\d{4})_(\d{4}).txt'
 frontFilePath = 'front/'
 backFilePath = 'back/'
@@ -99,12 +92,15 @@ backData = readFiles(os.path.join(baseFilePath, backFilePath), files)
 # backFiles- cut off points after x
 backData = backData[backData['x'] < (back_img_px + 640)]
 # frontFiles- cur off points before x
-frontData = frontData[frontData['x'] > (front_img_px - 690)]
-frontData['x'] = frontData['x'] + (1280 - 640 - back_img_px)
+frontData = frontData[frontData['x'] > (front_img_px - 740)]
+frontData['x'] = frontData['x'] + (1280 - 590 - back_img_px)
 # join dataframes
 data = pd.concat([backData,frontData])
 data['y'] = data['y'].max() - data['y'] + 15
 
 
-vectorPlot(data, baseFilePath, baseFilePath[-4:-1])
-centerSpeeds(data, baseFilePath[-4:-1])
+vectorPlot(data, baseFilePath, 4, 'Flow: ' + baseFilePath[-4:-1] + 'V')
+vectorPlot(data, baseFilePath, 400, 'Flow: ' + baseFilePath[-4:-1] + 'V')
+centerSpeeds(data, 'Flow: ' + baseFilePath[-4:-1] + 'V')
+#surfacePlot(data, 'Flow: ' + baseFilePath[-4:-1] + 'V')
+plt.show()
