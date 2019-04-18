@@ -2,8 +2,8 @@ import os
 from PIL import Image
 import numpy as np
 
-front_image_path = '/media/stian/Evan Dutch/Bifurcation/12805/05-02-2019/front/2853/2853_'
-back_image_path = '/media/stian/Evan Dutch/Bifurcation/12805/05-02-2019/back/2851/2851_'
+front_image_path = '/media/stian/Evan Dutch/Bifurcation/12160/DataSet1/front/2953/2953_'
+back_image_path = '/media/stian/Evan Dutch/Bifurcation/12160/DataSet1/back/2956/2956_'
 
 front_img_px = 1150
 back_img_px = 230
@@ -23,7 +23,7 @@ for i in range(image_count):
 
     stitched_img = np.concatenate((back_img, front_img), axis=1)
     result = Image.fromarray((stitched_img).astype(np.uint8))
-    result.save('/media/stian/Evan Dutch/Bifurcation/12805/05-02-2019/stitched/285/285_' + num + '.bmp')
+    result.save('/media/stian/Evan Dutch/Bifurcation/12160/DataSet1/stitched/295/295_' + num + '.bmp')
 
 print()
 
