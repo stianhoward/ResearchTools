@@ -80,7 +80,6 @@ def vectorPlot(data, imagePath, filter = 400, title = 'VectorPlot', plot = 1):
 
 def vertSlices(data, saveBasePath, title= "Verticle Slices"):
     # Check if the save path exists, and create if it doesn't
-    print(saveBasePath)
     if not os.path.isdir(saveBasePath):
         if not os.path.isdir(os.path.split(saveBasePath)[0]):
             os.mkdir(os.path.split(saveBasePath)[0])
@@ -95,68 +94,113 @@ def vertSlices(data, saveBasePath, title= "Verticle Slices"):
     data = data[data['filtered']==0]
 
     # Set data to 35 pixel chunks
-    base = 20
+    base = 100
 
     data.loc[:,'x'] = data['x'].map(lambda x: custom_round(x, base))
-    data.loc[:,'y'] = data['y'].map(lambda y: custom_round(y,base))
+    data.loc[:,'y'] = data['y'].map(lambda y: custom_round(y,base/5))
 
     # Organize the data by x and y, averaging velocities
     data = data.groupby(['y','x']).mean()
     data = data.reset_index()
     data = data.fillna(0)
 
+    # set scale for x-positions to plot
     max = data['x'].max()
-    for i in range(1,int(max/base),6):
+    topColumn = int(max/base) - 1
+
+    
+    # Determining the max velocity for balancing the velocity scale
+    tmpData = data[data.x <= topColumn*base]
+    tmpData = tmpData[tmpData.x >= 2*base]
+    tmpData = tmpData[tmpData.x < (topColumn * base)]
+    velocities = np.sqrt(np.square(tmpData['u'])  + np.square(tmpData['v']))
+    maxV = velocities.max()
+    print(maxV)    
+
+    plt.figure(figsize=(20,10))
+    for i in range(2,topColumn):	
         xPos = i * base
         
-        titler = title + ' xPos = ' + str(xPos)
         # Create the x and velocity arrays
         xs = data[data['x'] == xPos]
         ys = xs['y']
         velocities = np.sqrt(np.square(xs['u'])  + np.square(xs['v']))
+        velocities = velocities * np.sign(xs['u']) * base / maxV 
 
         '''
         y_selected = data[data['y'] == 400]
         x = y_selected['x']
         velocities = np.sqrt(np.square(y_selected['u'])  + np.square(y_selected['v']))
         '''
-
+        velocities = xPos + velocities 
         # Plot the data
-        plt.figure()
-        plt.plot(ys,velocities)
+        plt.plot(velocities, ys)
+    
+    titler = title + ' ' + os.path.split(saveBasePath)[1]
+    plt.title(titler)
+    plt.savefig(os.path.join(os.path.split(saveBasePath)[0], os.path.split(saveBasePath)[1] +'.png'))
+    plt.close()
+    #plt.show()
         
-        # Check the save paths and save the figure before closing it
-        plt.savefig(os.path.join(saveBasePath, str(xPos)+'.png'))
-        plt.close()
         
-        
+def process(baseFilePath):
+    savePath = os.path.join(os.path.split(os.path.split(baseFilePath)[0])[0] + '/analysis/xslices' , os.path.split(baseFilePath)[1])
+
+    files = '(\d{4})_(\d{4}).txt'
+    frontFilePath = None
+    backFilePath = 'back/'
+    front_img_px = 1150
+    back_img_px = 230
 
 
-baseFilePath = '/media/stian/Evan Dutch/Bifurcation/12160/DataSet1/stitched/245'
-savePath = os.path.join(os.path.split(os.path.split(baseFilePath)[0])[0] + '/analysis/xslices' , os.path.split(baseFilePath)[1])
+    if (frontFilePath and backFilePath):
+        frontData = readFiles(os.path.join(baseFilePath, frontFilePath), files)
+        backData = readFiles(os.path.join(baseFilePath, backFilePath), files)
 
-files = '(\d{4})_(\d{4}).txt'
-frontFilePath = 'front/'
-backFilePath = 'back/'
-front_img_px = 1150
-back_img_px = 230
-
-frontData = readFiles(os.path.join(baseFilePath, frontFilePath), files)
-backData = readFiles(os.path.join(baseFilePath, backFilePath), files)
-
-# backFiles- cut off points after x
-backData = backData[backData['x'] < (back_img_px + 640)]
-# frontFiles- cur off points before x
-frontData = frontData[frontData['x'] > (front_img_px - 740)]
-frontData['x'] = frontData['x'] + (1280 - 590 - back_img_px)
-# join dataframes
-data = pd.concat([backData,frontData])
-data['y'] = data['y'].max() - data['y'] + 15
+        # backFiles- cut off points after x
+        backData = backData[backData['x'] < (back_img_px + 640)]
+        # frontFiles- cur off points before x
+        frontData = frontData[frontData['x'] > (front_img_px - 740)]
+        frontData['x'] = frontData['x'] + (1280 - 590 - back_img_px)
+        # join dataframes
+        data = pd.concat([backData,frontData])
+        data['y'] = data['y'].max() - data['y'] + 15
+    elif frontFilePath:
+        pass
+    elif backFilePath:
+        backData = readFiles(os.path.join(baseFilePath, backFilePath), files)
+        data = backData
 
 
-vectorPlot(data, baseFilePath, 10, 'Flow: ' + baseFilePath[-5:-1] + 'V')
-vectorPlot(data, baseFilePath, 400, 'Flow: ' + baseFilePath[-5:-1] + 'V')
-centerSpeeds(data, 'Flow: ' + baseFilePath[-4:-1] + 'V')
-vertSlices(data, savePath, 'Vertical Slices')
-#surfacePlot(data, 'Flow: ' + baseFilePath[-4:-1] + 'V')
-plt.show()
+    #vectorPlot(data, baseFilePath, 10, 'Flow: ' + baseFilePath[-5:-1] + 'V')
+    #vectorPlot(data, baseFilePath, 400, 'Flow: ' + baseFilePath[-5:-1] + 'V')
+    #centerSpeeds(data, 'Flow: ' + baseFilePath[-4:-1] + 'V')
+    vertSlices(data, savePath, 'Sm A MX12160: Vertical Slices')
+    #surfacePlot(data, 'Flow: ' + baseFilePath[-4:-1] + 'V')
+    #plt.show()
+
+
+FilePaths = ['/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/215',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/225',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/235',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/245',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/255',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/265',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/275',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/285',
+'/media/stian/Evan Dutch/Bifurcation/12160/DataSet2/stitched/295']
+
+'''
+FilePaths = ['/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/215',
+'/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/225',
+'/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/235',
+'/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/245',
+'/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/255',
+'/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/265',
+'/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/275',
+'/media/stian/Evan Dutch/Bifurcation/12805/DataSet3/stitched/285']
+'''
+
+
+for Path in FilePaths:
+    process(Path)
