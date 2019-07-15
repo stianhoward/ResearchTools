@@ -72,7 +72,7 @@ def calcError(human,ml):
   plt.title('RMS: ' + str(rms))
   print(rms)
 
-if __name__ == "__main__":
+def trackRMSplot():
   humanSet = loadCSV('/home/stian/Desktop/testVid/highC-r1/CSV',512)
   mlSet = loadJSON('/home/stian/Desktop/testVid/highC-r1/outIMG/',512)
   tracks = trackPoints(mlSet)
@@ -80,3 +80,20 @@ if __name__ == "__main__":
   calcError(humanSet,mlSet)
   plt.savefig('/home/stian/Desktop/testVid/highC-r1/track.jpg')
   plt.show()
+
+def pointPlot():
+  mlSet1 = loadJSON('/media/stian/StianHD/tmp/images-cent/outIMG',800)
+  mlSet2 = loadJSON('/media/stian/StianHD/tmp/images-off/outIMG',800)
+  missingPoints1 = [14,40,41,42,43,44,79,105,106,131,132,157,158,184,187,210,211,236,237,238,263,264,289,316,320,343,368,398,420,421,423,455,456,457,458,459,460,461,484,485,486]*int(800/500)
+  missingPoints2 = [1,6,7,8,10,15,17,18,22,45,54,56,79,80,81,184,245,265,290,291,318,343,370,397,398,467,471,472,475,486,487,488] * int(800/500)
+  plt.plot(mlSet1.x,mlSet1.y,'b.')
+  plt.plot(mlSet2.x,mlSet2.y,'b.')
+  plt.plot(missingPoints1,missingPoints1,'rX')
+  ys = [int(i)+40 for i in missingPoints2]
+  plt.plot(missingPoints2,ys,'rX')
+  plt.axis([0,800,0,800])
+  plt.grid(b=True)
+  plt.show()
+
+if __name__ == "__main__":
+  pointPlot()
