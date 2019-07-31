@@ -47,7 +47,7 @@ def plotTracks(humanData,mlTracks,imgPath):
   for particle in mlTracks['particle'].unique():
     path = mlTracks[mlTracks.particle == particle]
     plt.plot(path.x,path.y,'b-')
-  plt.plot(humanData.x,humanData.y,'rx')
+  plt.plot(humanData.x,humanData.y,'rx',linewidth=4,markersize=12)
 
 # Simply link the objects between frames with trackpy
 def trackPoints(data):
@@ -69,16 +69,20 @@ def calcError(human,ml):
     min_dist = [pointDist(human.loc[i,:],ml[['x','y']])] 
     dists = np.append(dists,min_dist)
   rms = np.sqrt(np.mean(dists ** 2)) 
-  plt.title('RMS: ' + str(rms))
-  print(rms)
+  #plt.title('RMS: ' + str(rms))
+  return(rms)
 
 def trackRMSplot():
-  humanSet = loadCSV('/home/stian/Desktop/testVid/highC-r1/CSV',512)
-  mlSet = loadJSON('/home/stian/Desktop/testVid/highC-r1/outIMG/',512)
+  ax = plt.axes([0,0,1,1], frameon=False)
+  ax.get_xaxis().set_visible(False)
+  ax.get_yaxis().set_visible(False)
+
+  humanSet = loadCSV('/media/stian/StianHD/tmp/highC-r1/CSV',512)
+  mlSet = loadJSON('/media/stian/StianHD/tmp/highC-r1/corrected/outIMG/',512)
   tracks = trackPoints(mlSet)
-  plotTracks(humanSet,tracks,'/home/stian/Desktop/testVid/highC-r1/2019-06-28_r1_0300.tif')
-  calcError(humanSet,mlSet)
-  plt.savefig('/home/stian/Desktop/testVid/highC-r1/track.jpg')
+  plotTracks(humanSet,tracks,'/media/stian/StianHD/tmp/highC-r1/corrected/r1_0100.tif')
+  error = calcError(humanSet,mlSet)
+  plt.savefig('/home/stian/Desktop/track.jpg')
   plt.show()
 
 def pointPlot():
@@ -96,4 +100,4 @@ def pointPlot():
   plt.show()
 
 if __name__ == "__main__":
-  pointPlot()
+  trackRMSplot()
